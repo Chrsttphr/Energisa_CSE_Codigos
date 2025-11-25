@@ -14,6 +14,7 @@ Planilha com dados válidos nas colunas J (valores) e na coluna do critério (ex
 Macro "PintarCriterio" devidamente instalada e associada a um botão.
 
 5. Procedimentos
+   
 5.1 Preparação
 Abra a planilha desejada.
 Certifique-se de que:
@@ -36,6 +37,7 @@ Ao final, será exibida uma mensagem com:
 
 Tempo de execução.
 Total de células pintadas.
+
 6. Regras e Restrições
 Apenas células visíveis da coluna J são analisadas.
 Células já pintadas de amarelo são ignoradas.
@@ -67,6 +69,7 @@ Planilha com dados na coluna J.
 Macro "LimparColunaJ" associada a um botão.
 
 5. Procedimentos
+   
 5.1 Preparação
 Abra a planilha desejada.
 Verifique se há dados na coluna J a partir da linha 6.
@@ -102,6 +105,7 @@ Intervalo de valores visíveis e não pintados na coluna J.
 Macro "AcharValor_v2" associada a um botão.
 
 5. Procedimentos
+   
 5.1 Preparação
 Digite o valor-alvo na célula J4 (ex: -23659,05).
 Verifique se as células da coluna J estão visíveis e sem preenchimento.
@@ -139,6 +143,7 @@ Intervalo de valores visíveis, não pintados e numéricos.
 Macro "PintarPares" associada a um botão.
 
 5. Procedimentos
+   
 5.1 Preparação
 Abra a planilha desejada.
 Verifique se a célula N3 está disponível para controle de numeração.
@@ -179,6 +184,7 @@ Planilha com lançamentos e cheques organizados.
 Macro "ChequeFuncionarios_v2 – DIVERSOS" associada a um botão.
 
 5. Procedimentos
+
 5.1 Preparação
 Verifique se os dados estão organizados a partir da linha 6.
 Confirme que a coluna J contém os valores dos lançamentos.
