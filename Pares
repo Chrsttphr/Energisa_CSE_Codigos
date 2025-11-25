@@ -1,0 +1,83 @@
+Sub PintarPares()
+    Dim ws As Worksheet
+    Set ws = ActiveSheet
+
+    Dim celulas As Range
+    On Error Resume Next
+    Set celulas = Application.InputBox("Selecione o intervalo da coluna que deseja analisar:", "Selecionar Intervalo", Type:=8)
+    On Error GoTo 0
+
+    If celulas Is Nothing Then
+        MsgBox "Operação cancelada. Nenhum intervalo foi selecionado.", vbExclamation
+        Exit Sub
+    End If
+
+    Dim dict As Object
+    Set dict = CreateObject("Scripting.Dictionary")
+    Dim celula As Range
+    Dim VALOR As Double
+    Dim tInicio As Double: tInicio = Timer
+    Dim totalPares As Long: totalPares = 0
+
+    ' Recupera o último número de par usado (armazenado em N3)
+    Dim ultimoPar As Long
+    If IsNumeric(ws.Range("N3").Value) Then
+        ultimoPar = ws.Range("N3").Value
+    Else
+        ultimoPar = 0
+    End If
+
+    ' Coleta apenas células visíveis e não pintadas
+    For Each celula In celulas
+        If celula.EntireRow.Hidden = False Then
+            If celula.Interior.ColorIndex = -4142 Then ' Não pintada
+                If IsNumeric(celula.Value) And Trim(celula.Value) <> "" Then
+                    VALOR = Round(celula.Value, 2)
+                    If Not dict.Exists(VALOR) Then
+                        Set dict(VALOR) = New Collection
+                    End If
+                    dict(VALOR).Add celula
+                End If
+            End If
+        End If
+    Next celula
+
+    Dim chave As Variant
+    Dim paresDisponiveis As Long
+    Dim i As Long
+
+    For Each chave In dict.Keys
+        If chave <> 0 And dict.Exists(-chave) Then
+            paresDisponiveis = WorksheetFunction.Min(dict(chave).count, dict(-chave).count)
+
+    For i = 1 To paresDisponiveis
+    Dim cel1 As Range, cel2 As Range
+    Set cel1 = dict(chave)(i)
+    Set cel2 = dict(-chave)(i)
+
+    ' Pintar de amarelo
+    cel1.Interior.Color = RGB(255, 255, 0)
+    cel2.Interior.Color = RGB(255, 255, 0)
+
+    ' Rastreabilidade na coluna M
+    ws.Cells(cel1.Row, "M").Value = "Par Nº " & ultimoPar
+    ws.Cells(cel2.Row, "M").Value = "Par Nº " & ultimoPar
+    
+    ' Incrementa o número do par apenas uma vez
+    ultimoPar = ultimoPar + 1
+
+    totalPares = totalPares + 1
+    Next i
+    
+        End If
+    Next chave
+
+    ' Atualiza o número do último par usado
+    ws.Range("N3").Value = ultimoPar
+
+    Dim tFim As Double: tFim = Timer
+    MsgBox "Processo concluído!" & vbCrLf & _
+           "Tempo: " & Format(tFim - tInicio, "0.00") & " segundos" & vbCrLf & _
+           "Total de pares pintados: " & totalPares & vbCrLf & vbCrLf & _
+           "Não deixa de verificar!", vbExclamation, "Finalizado"
+End Sub
