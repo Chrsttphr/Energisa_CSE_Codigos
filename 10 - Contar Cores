@@ -1,0 +1,42 @@
+Function ContarPorCor(Rng As Range, CorCelula As Range) As Long
+    Dim Cel As Range
+    Dim Contador As Long
+    Application.Volatile
+    For Each Cel In Rng
+        If Cel.Interior.Color = CorCelula.Interior.Color Then
+            Contador = Contador + 1
+        End If
+    Next Cel
+    ContarPorCor = Contador
+End Function
+
+✅ O que a função faz
+Recebe dois parâmetros
+
+Rng: Intervalo onde será feita a contagem.
+CorCelula: Uma célula que serve como referência de cor.
+
+Percorre cada célula do intervalo
+Para cada célula dentro de Rng:
+
+Compara a cor de preenchimento (Interior.Color) com a cor da célula de referência.
+
+Conta as células que têm a mesma cor
+Se a cor for igual, incrementa o contador.
+
+Retorna o total
+No final, a função devolve o número de células que possuem a mesma cor da célula indicada.
+
+✅ Para que serve
+Essa função é útil para contar células coloridas em uma planilha, algo que o Excel não faz nativamente.
+Por exemplo:
+Contar quantas células estão destacadas em vermelho (indicando erro).
+Contar quantas células estão verdes (indicando aprovação).
+
+
+✅ Benefícios
+Flexibilidade: Funciona com qualquer cor definida manualmente.
+Automação: Evita contagem manual.
+Integração: Pode ser usada diretamente em fórmulas do Excel, como:
+=ContarPorCor(A1:A100;C1)
+(onde C1 é a célula com a cor de referência).
