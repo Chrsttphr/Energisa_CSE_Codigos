@@ -1,0 +1,39 @@
+Uso da Fórmula INDIRETO
+A função INDIRETO permite criar referências dinâmicas a células, intervalos ou até mesmo outras planilhas e arquivos. Estrutura básica:
+INDIRETO("'" & [Célula com nome do arquivo] & "Nome da Sheet'! [Celula ou Intervalo]")
+
+Exemplo aplicado
+=SE($B$2="ENERGISA";
+    SOMASES(
+        INDIRETO("'" & SUMÁRIO!$G$2 & "BASE ATIVA'!$AF:$AF");
+        INDIRETO("'" & SUMÁRIO!$G$2 & "BASE ATIVA'!$AS:$AS");"NOVO";
+        INDIRETO("'" & SUMÁRIO!$G$2 & "BASE ATIVA'!$E:$E");"ADMINISTRATIVA");
+    SOMASES(
+        INDIRETO("'" & SUMÁRIO!$G$2 & "BASE ATIVA'!$AF:$AF");
+        INDIRETO("'" & SUMÁRIO!$G$2 & "BASE ATIVA'!$A:$A");$B$2;
+        INDIRETO("'" & SUMÁRIO!$G$2 & "BASE ATIVA'!$AS:$AS");"NOVO";
+        INDIRETO("'" & SUMÁRIO!$G$2 & "BASE ATIVA'!$E:$E");"ADMINISTRATIVA"))
+
+O mesmo padrão se repete para outras categorias, como C$4, CRIMINAL, JEC, RECEBÍVEIS:
++ SE($B$2="ENERGISA";
+    SOMASES(...;"CRIMINAL");
+    SOMASES(...;"CRIMINAL"))
+
++ SE($B$2="ENERGISA";
+    SOMASES(...;"JEC");
+    SOMASES(...;"JEC"))
+
++ SE($B$2="ENERGISA";
+    SOMASES(...;"RECEBIVEIS");
+    SOMASES(...;"RECEBIVEIS"))
+
+Observação
+Esse caso aplica busca entre dois arquivos na mesma pasta.
+
+Também é possível usar dentro do mesmo arquivo, somando várias Sheets, caso exista uma lista com os nomes delas:
+=SUBTOTAL(9;INDIRETO("'" & A2 & "'!B6")) +
+ SUBTOTAL(9;INDIRETO("'" & A3 & "'!B6")) +
+ SUBTOTAL(9;INDIRETO("'" & A4 & "'!B6")) +
+ SUBTOTAL(9;INDIRETO("'" & A5 & "'!B6"))
+
+Importante: A função SUBTOTAL não suporta múltiplos intervalos. Para isso, utilize SOMA.
