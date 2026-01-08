@@ -1,0 +1,236 @@
+Option Explicit
+
+Sub CriarTabelaComHiperlinks()
+    Dim ws As Worksheet
+    Dim wsSumario As Worksheet
+    Dim i As Long
+    Dim intervalo As Range
+    Dim tabela As ListObject
+    Dim btn As Shape
+    Dim btnLeft As Double, btnTop As Double, btnWidth As Double, btnHeight As Double
+    
+    Const nmSumario As String = "Sumário"
+    Const nmTabela As String = "tbSumarioPlanilhas"
+    Const nmBotao As String = "btnAtualizarSumario"
+    
+    Application.ScreenUpdating = False
+    Application.EnableEvents = False
+    
+    ' === Garantir planilha Sumário ===
+    On Error Resume Next
+    Set wsSumario = ThisWorkbook.Worksheets(nmSumario)
+    On Error GoTo 0
+    
+    If wsSumario Is Nothing Then
+        Set wsSumario = ThisWorkbook.Worksheets.Add(After:=Sheets(Sheets.Count))
+        wsSumario.Name = nmSumario
+    End If
+    
+    ' === Só alterar colunas A e B do Sumário ===
+    With wsSumario
+        .Columns("A:B").Clear                               ' limpa conteúdo e formatação somente A:B
+        ' Linha 2 opcional livre para instruções se quiser
+        .Range("A3").Value = "Nome da Planilha"
+        .Range("B3").Value = "Link"
+        With .Range("A3:B3")
+            .Font.Bold = True
+            .Font.Color = RGB(0, 0, 0)
+            .Interior.Color = RGB(217, 217, 217)
+            .HorizontalAlignment = xlCenter
+            .VerticalAlignment = xlCenter
+        End With
+    End With
+    
+    ' === Preencher linhas com nomes de planilhas e links ===
+    i = 4 ' dados começam logo abaixo do cabeçalho (linha 4)
+    For Each ws In ThisWorkbook.Worksheets
+        If ws.Name <> wsSumario.Name Then
+            ' Nome
+            wsSumario.Cells(i, 1).Value = ws.Name
+            
+            ' Link para abrir a planilha
+            wsSumario.Hyperlinks.Add _
+                Anchor:=wsSumario.Cells(i, 2), _
+                Address:="", _
+                SubAddress:="'" & ws.Name & "'!A1", _
+                TextToDisplay:="Acessar"
+            wsSumario.Cells(i, 2).Font.ColorIndex = xlAutomatic
+            
+            ' === Garantir link único "Voltar ao Sumário" na linha 1 ===
+            GarantirLinkVoltar ws, wsSumario
+            
+            i = i + 1
+        End If
+    Next ws
+    
+    ' === Criar/Atualizar Tabela em A:B (inclui cabeçalho de A3:B3) ===
+    Set intervalo = wsSumario.Range("A3:B" & i - 1)
+    
+    ' Remover tabela sobreposta em A:B se existir
+    On Error Resume Next
+    For Each tabela In wsSumario.ListObjects
+        If Not Intersect(tabela.Range, wsSumario.Range("A:B")) Is Nothing Then
+            tabela.Unlist
+        End If
+    Next tabela
+    On Error GoTo 0
+    
+    Set tabela = wsSumario.ListObjects.Add(xlSrcRange, intervalo, , xlYes)
+    tabela.Name = nmTabela
+    tabela.TableStyle = "TableStyleMedium9"
+    
+    ' Formatação da área A:B
+    With intervalo
+        .Font.Name = "Arial"
+        .Font.Size = 14
+        .HorizontalAlignment = xlCenter
+        .Borders(xlEdgeBottom).LineStyle = xlContinuous
+        .Borders(xlEdgeLeft).LineStyle = xlContinuous
+        .Borders(xlEdgeRight).LineStyle = xlContinuous
+        .Borders(xlEdgeTop).LineStyle = xlContinuous
+        .Borders(xlInsideHorizontal).LineStyle = xlContinuous
+        .Borders(xlInsideVertical).LineStyle = xlContinuous
+    End With
+    
+    wsSumario.Columns("A:B").AutoFit
+    
+    ' Borda externa espessa e escura
+    With tabela.Range.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous: .Weight = xlThick: .Color = RGB(64, 64, 64)
+    End With
+    With tabela.Range.Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous: .Weight = xlThick: .Color = RGB(64, 64, 64)
+    End With
+    With tabela.Range.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous: .Weight = xlThick: .Color = RGB(64, 64, 64)
+    End With
+    With tabela.Range.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous: .Weight = xlThick: .Color = RGB(64, 64, 64)
+    End With
+    
+    ' === Botão em A1:B1 (topo), com largura suficiente para o texto ===
+    On Error Resume Next
+    wsSumario.Shapes(nmBotao).Delete
+    On Error GoTo 0
+    
+    btnLeft = wsSumario.Range("A1").Left + 4
+    btnTop = wsSumario.Range("A1").Top + 2
+    btnWidth = wsSumario.Range("A1:B1").Width - 8
+    btnHeight = wsSumario.Range("A1").Height + 8
+    
+    Set btn = wsSumario.Shapes.AddShape( _
+        Type:=msoShapeRoundedRectangle, _
+        Left:=btnLeft, _
+        Top:=btnTop, _
+        Width:=btnWidth, _
+        Height:=btnHeight)
+        
+    With btn
+        .Name = nmBotao
+        .Fill.ForeColor.RGB = RGB(0, 122, 204)   ' Azul Office
+        .Fill.Transparency = 0.06
+        .Line.ForeColor.RGB = RGB(255, 255, 255)
+        .Line.Weight = 1.5
+        .Shadow.Visible = msoTrue
+        
+        ' Texto do botão
+        .TextFrame2.TextRange.Characters.Text = "Atualizar Sumário"
+        With .TextFrame2.TextRange.Characters
+            .Font.Name = "Segoe UI"
+            .Font.Size = 14
+            .Font.Fill.ForeColor.RGB = RGB(255, 255, 255)
+            .Font.Bold = msoTrue
+        End With
+        
+        ' Alinhamentos corretos com TextFrame2:
+        .TextFrame2.TextRange.ParagraphFormat.Alignment = msoAlignCenter   ' horizontal
+        .TextFrame2.VerticalAnchor = msoAnchorMiddle                       ' vertical
+        
+        ' Fallback (compatibilidade) usando TextFrame clássico
+        On Error Resume Next
+        .TextFrame.HorizontalAlignment = xlCenter
+        .TextFrame.VerticalAlignment = xlCenter
+        On Error GoTo 0
+        
+        ' Ao clicar, executa novamente esta macro
+        .OnAction = "CriarTabelaComHiperlinks"
+    End With
+    
+    Application.EnableEvents = True
+    Application.ScreenUpdating = True
+    
+    MsgBox "Sumário atualizado com sucesso!", vbInformation
+End Sub
+
+' ===========================================================
+' Garante que exista apenas UM link "Voltar ao Sumário" na linha 1
+' - Se existir, formata e mantém
+' - Se houver múltiplos, remove extras
+' - Se não existir, cria na primeira célula vazia da linha 1 (até col 50)
+' ===========================================================
+Private Sub GarantirLinkVoltar(ByVal ws As Worksheet, ByVal wsSumario As Worksheet)
+    Dim hl As Hyperlink
+    Dim linkPrincipal As Hyperlink
+    Dim countLinks As Long
+    Dim alvoSubAddress As String
+    Dim rngLinha1 As Range
+    Dim c As Range
+    
+    alvoSubAddress = "'" & wsSumario.Name & "'!A1"
+    Set rngLinha1 = ws.Range(ws.Cells(1, 1), ws.Cells(1, 50)) ' A1:AX1 aprox
+    
+    ' Contar e identificar links que apontam para o Sumário
+    countLinks = 0
+    For Each hl In ws.Hyperlinks
+        If hl.SubAddress = alvoSubAddress Then
+            countLinks = countLinks + 1
+            If linkPrincipal Is Nothing Then Set linkPrincipal = hl
+        End If
+    Next hl
+    
+    ' Se houver mais de um, remove extras (mantém o primeiro encontrado)
+    If countLinks > 1 Then
+        For Each hl In ws.Hyperlinks
+            If hl.SubAddress = alvoSubAddress Then
+                If hl Is linkPrincipal Then
+                    ' mantém
+                Else
+                    hl.Delete
+                End If
+            End If
+        Next hl
+        countLinks = 1
+    End If
+    
+    ' Se já existe um, apenas formata a célula desse link e encerra
+    If countLinks = 1 Then
+        With linkPrincipal.Range
+            .Value = "<- Voltar ao Sumário"
+            .Font.Color = RGB(0, 102, 204)
+            .Font.Bold = True
+            .Interior.Color = RGB(222, 235, 247)
+            .HorizontalAlignment = xlCenter
+            .VerticalAlignment = xlCenter
+            .EntireColumn.AutoFit
+        End With
+        Exit Sub
+    End If
+    
+    ' Não existe ainda: criar na primeira célula vazia da linha 1 (até col 50)
+    For Each c In rngLinha1
+        If Len(c.Value) = 0 Then
+            ws.Hyperlinks.Add _
+                Anchor:=c, Address:="", SubAddress:=alvoSubAddress, _
+                TextToDisplay:="<- Voltar ao Sumário"
+            With c
+                .Font.Color = RGB(0, 102, 204)
+                .Font.Bold = True
+                .Interior.Color = RGB(222, 235, 247)
+                .HorizontalAlignment = xlCenter
+                .VerticalAlignment = xlCenter
+                .EntireColumn.AutoFit
+            End With
+            Exit For
+        End If
+    Next c
+End Sub
