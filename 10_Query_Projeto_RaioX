@@ -1,0 +1,96 @@
+let
+    // Função para limpar chaves (remove espaços, aspas, CR/LF, NBSP e padroniza maiúsculas)
+    LimpaChave = (t as nullable text) as nullable text =>
+        let
+            s0 = if t = null then null else Text.From(t),
+            s1 = Text.Replace(s0, """", ""), // remove aspas
+            s2 = Text.Replace(s1, Character.FromNumber(160), " "), // NBSP -> espaço
+            s3 = Text.Replace(s2, "#(tab)", ""),
+            s4 = Text.Replace(s3, "#(cr)", ""),
+            s5 = Text.Replace(s4, "#(lf)", ""),
+            s6 = Text.Trim(s5),
+            s7 = Text.Upper(s6)
+        in
+            s7,
+ 
+    // Função para processar cada arquivo
+    ProcessaArquivo = (Caminho as text, NomeArquivo as text) =>
+    let
+        // Extrai número do arquivo
+        SemExtensao = if Text.Contains(NomeArquivo, ".") then Text.BeforeDelimiter(NomeArquivo, ".") else NomeArquivo,
+        Sufixo = if Text.Contains(SemExtensao, "_") then Text.AfterDelimiter(SemExtensao, "_", {Occurrence.Last}) else null,
+        Digitos = if Sufixo <> null then Text.Select(Text.Trim(Sufixo), {"0".."9"}) else null,
+        NumArquivo = try Number.FromText(Digitos) otherwise null,
+ 
+        // Lê CSV com delimitador ";" e tratamento de aspas
+        FonteCSV = Csv.Document(File.Contents(Caminho), [Delimiter=";", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+ 
+        // Promove cabeçalho
+        PromoveCabecalho = Table.PromoteHeaders(FonteCSV, [PromoteAllScalars=true]),
+ 
+        // Seleciona colunas desejadas
+        ColunasSelecionadas = Table.SelectColumns(PromoveCabecalho, {
+            "ANOCTZ_LCT","MESCTZ_LCT","CODORG_LCT_LCT","NUMFLC_LCT","CODCTA_CTB_LCT","INDDEB_CRD_LCT","VALLCT_LCT"
+        }),
+ 
+        // Normaliza chaves
+        ChavesNormalizadas = Table.TransformColumns(ColunasSelecionadas, {
+            {"ANOCTZ_LCT", each LimpaChave(_), type text},
+            {"MESCTZ_LCT", each LimpaChave(_), type text},
+            {"CODORG_LCT_LCT", each LimpaChave(_), type text},
+            {"NUMFLC_LCT", each LimpaChave(_), type text},
+            {"CODCTA_CTB_LCT", each LimpaChave(_), type text},
+            {"INDDEB_CRD_LCT", each LimpaChave(_), type text},
+            {"VALLCT_LCT", each Text.From(_), type text}
+        }),
+ 
+        // Converte Valor para número
+        ValorNormalizado = Table.AddColumn(ChavesNormalizadas, "Valor", each
+            let
+                txt0 = Text.Trim([VALLCT_LCT]),
+                sinal = if txt0 <> null and Text.EndsWith(txt0, "-") then -1 else 1,
+                txt1 = Text.Replace(txt0, ".", ""),
+                txt2 = Text.Replace(txt1, ",", "."),
+                txt3 = Text.Replace(txt2, "-", ""),
+                num = try Number.FromText(txt3) otherwise null
+            in
+                sinal * num, type number
+        ),
+ 
+        // Adiciona NumArquivo e NomeArquivo
+        ComNumArquivo = Table.AddColumn(ValorNormalizado, "NumArquivo", each NumArquivo, Int64.Type),
+        ComNomeArquivo = Table.AddColumn(ComNumArquivo, "NomeArquivoOriginal", each NomeArquivo, type text),
+ 
+        // Adiciona coluna de auditoria (chave concatenada)
+        ComChaveConcatenada = Table.AddColumn(ComNomeArquivo, "ChaveConcatenada", each
+            [NomeArquivoOriginal] & "|" &
+            [ANOCTZ_LCT] & "|" &
+            [MESCTZ_LCT] & "|" &
+            [CODORG_LCT_LCT] & "|" &
+            [NUMFLC_LCT] & "|" &
+            [CODCTA_CTB_LCT] & "|" &
+            [INDDEB_CRD_LCT], type text)
+    in
+        ComChaveConcatenada,
+ 
+    // Lista arquivos da pasta
+    Arquivos = Folder.Files("\\fs-cse\SERVICO_CONTABILIDADE\Geral\Check Fechamento Mensal\Controles Contábeis\Projeto Raio X\FR 30 Aprovação de lançamentos\Mapeamento da volumetria de lançamentos\Teste\Bloco 3 - Reduzido"),
+    Filtrados = Table.SelectRows(Arquivos, each Text.StartsWith([Name], "Extracao_lancamentos_origens_")),
+    ComFuncao = Table.AddColumn(Filtrados, "Transformado", each ProcessaArquivo([Folder Path] & [Name], [Name])),
+ 
+    // Expande todas as linhas
+    Expandido = Table.ExpandTableColumn(ComFuncao, "Transformado", {
+        "NumArquivo","NomeArquivoOriginal","ANOCTZ_LCT","MESCTZ_LCT","CODORG_LCT_LCT","NUMFLC_LCT","CODCTA_CTB_LCT","INDDEB_CRD_LCT","Valor","ChaveConcatenada"
+    }),
+ 
+    // Agrupa por arquivo + chaves
+    Agrupadas = Table.Group(
+        Expandido,
+        {"NomeArquivoOriginal","ANOCTZ_LCT","MESCTZ_LCT","CODORG_LCT_LCT","NUMFLC_LCT","CODCTA_CTB_LCT","INDDEB_CRD_LCT"},
+        {
+            {"QTD", each Table.RowCount(_), Int64.Type},
+            {"TOTAL", each List.Sum([Valor]), type number}
+        }
+    )
+in
+    Agrupadas
