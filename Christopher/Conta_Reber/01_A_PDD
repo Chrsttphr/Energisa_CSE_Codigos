@@ -1,13 +1,13 @@
 Option Explicit
 
 ' =================================================================================
-' MACRO — SALVAR PDD_SIENF MÊS ANTERIOR (GABARITO)
+' MACRO â€” SALVAR PDD_SIENF MÃŠS ANTERIOR (GABARITO)
 '
 ' AUDITORIA:
 ' - Controle de ambiente padronizado (BeginFastMode / EndFastMode)
-' - Uso apenas de funções do K_FUNCTIONS
-' - Cópia apenas de valores
-' - Preserva formatação numérica
+' - Uso apenas de funÃ§Ãµes do K_FUNCTIONS
+' - CÃ³pia apenas de valores
+' - Preserva formataÃ§Ã£o numÃ©rica
 '
 ' USO:
 ' - Executar no fechamento mensal
@@ -29,11 +29,11 @@ Public Sub A_Salvar_PDD_SIENF_Mes_Anterior()
     ' ------------------------------------------------------------
     Set wsOrig = GetWorksheetByNameCI(ThisWorkbook, "PDD_SIENF")
     If wsOrig Is Nothing Then
-        Err.Raise 5, , "A aba 'PDD_SIENF' não foi encontrada."
+        Err.Raise 5, , "A aba 'PDD_SIENF' nÃ£o foi encontrada."
     End If
 
     ' ------------------------------------------------------------
-    ' 2) Determinar última linha e coluna
+    ' 2) Determinar Ãºltima linha e coluna
     ' ------------------------------------------------------------
     lr = LastUsedRow(wsOrig)
     If lr < 2 Then
@@ -62,13 +62,13 @@ Public Sub A_Salvar_PDD_SIENF_Mes_Anterior()
     ' ------------------------------------------------------------
     rngD.Value = rngO.Value
 
-    ' Copiar formatação numérica (não crítica)
+    ' Copiar formataÃ§Ã£o numÃ©rica (nÃ£o crÃ­tica)
     On Error Resume Next
     rngD.NumberFormat = rngO.NumberFormat
     On Error GoTo TratarErro
 
-    MsgBox "Cópia concluída:" & vbCrLf & _
-           rngO.Rows.Count & " linhas × " & rngO.Columns.Count & " colunas.", _
+    MsgBox "CÃ³pia concluÃ­da:" & vbCrLf & _
+           rngO.Rows.Count & " linhas Ã— " & rngO.Columns.Count & " colunas.", _
            vbInformation, "Copiar PDD_SIENF ? Gabarito"
 
 FIM:
