@@ -1,13 +1,13 @@
 Option Explicit
 
 ' =================================================================================
-' MACRO A — ATUALIZA TODAS AS GUIAS (SICON / PDD_SIENF / SIENF)
+' MACRO A â€” ATUALIZA TODAS AS GUIAS (SICON / PDD_SIENF / SIENF)
 '
 ' AUDITORIA:
 ' - Controle de ambiente padronizado (BeginFastMode / EndFastMode)
 ' - Tratamento de erro seguro
-' - Métricas consolidadas (arquivos, linhas, tempo)
-' - Estrutura mantida (sem alterar lógica original)
+' - MÃ©tricas consolidadas (arquivos, linhas, tempo)
+' - Estrutura mantida (sem alterar lÃ³gica original)
 '
 ' DEPENDE DE:
 ' - K_FUNCTIONS (AppState, BeginFastMode, EndFastMode, ObterPasta)
@@ -44,7 +44,7 @@ Public Sub AA_Atualizar_SICON_PDD_SIENF()
 
     EndFastMode st
 
-    MsgBox "Concluído!" & vbCrLf & _
+    MsgBox "ConcluÃ­do!" & vbCrLf & _
            "Arquivos processados: " & totalArquivos & vbCrLf & _
            "Linhas importadas: " & totalLinhas & vbCrLf & _
            "Tempo: " & Format(Timer - t0, "0.0s"), vbInformation
