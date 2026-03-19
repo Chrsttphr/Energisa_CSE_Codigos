@@ -41,11 +41,11 @@ Public Sub I_Criar_Menu()
     ws.Columns(3).ColumnWidth = 2
 
     ' ------------------------------------------------------------
-    ' Título
+    ' TÃ­tulo
     ' ------------------------------------------------------------
     Set titulo = ws.Shapes.AddTextbox(msoTextOrientationHorizontal, 20, 12, 720, 30)
     With titulo
-        .TextFrame2.TextRange.Text = "MENU DE OPERAÇÕES – CONCILIAÇÃO"
+        .TextFrame2.TextRange.Text = "MENU DE OPERAÃ‡Ã•ES â€“ CONCILIAÃ‡ÃƒO"
         .TextFrame2.TextRange.Font.Size = 20
         .TextFrame2.TextRange.Font.Bold = msoTrue
         .Line.Visible = msoFalse
@@ -61,7 +61,7 @@ Public Sub I_Criar_Menu()
         "1c) Atualizar SIENF (somente)", _
         "2) Transferir SICON ? Base_Conciliacao", _
         "3) Migrar Zeradas (BI = 0 ou ""-"")", _
-        "Extra) Atualizar Tabela Dinâmica do Resumo", _
+        "Extra) Atualizar Tabela DinÃ¢mica do Resumo", _
         "Fechamento) Copiar PDD_SIENF ? Gabarito" _
     )
 
@@ -83,12 +83,12 @@ Public Sub I_Criar_Menu()
         "Atualiza apenas a base SIENF.", _
         "Transfere os dados importados da SICON para a Base_Conciliacao.", _
         "Move registros da Base_Conciliacao cujo valor conciliado seja zero para a aba de zerados.", _
-        "Atualiza as tabelas dinâmicas da aba Resumo.", _
-        "Copia os dados atuais da PDD_SIENF para o gabarito de mês anterior." _
+        "Atualiza as tabelas dinÃ¢micas da aba Resumo.", _
+        "Copia os dados atuais da PDD_SIENF para o gabarito de mÃªs anterior." _
     )
 
     ' ------------------------------------------------------------
-    ' Desenho dos botões
+    ' Desenho dos botÃµes
     ' ------------------------------------------------------------
     leftPos = 30
     topPos = 60
