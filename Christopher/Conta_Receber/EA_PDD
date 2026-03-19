@@ -27,7 +27,7 @@ Public Sub EA_Atualizar_PDD_AGING()
     colBI = ColLetraParaNumero("Q")  ' VALOR
 
     ' ============================================================
-    ' 1) Identificar período mais recente (Ano/Mês)
+    ' 1) Identificar perÃ­odo mais recente (Ano/MÃªs)
     ' ============================================================
     lrBase = LastUsedRow(wsBase)
     maxAno = -1
@@ -48,7 +48,7 @@ Public Sub EA_Atualizar_PDD_AGING()
         End If
     Next i
 
-    If maxAno < 0 Or maxMes < 0 Then Err.Raise 5, , "Base sem Ano/Mês válido."
+    If maxAno < 0 Or maxMes < 0 Then Err.Raise 5, , "Base sem Ano/MÃªs vÃ¡lido."
 
     ' ============================================================
     ' 2) Filtrar Base
