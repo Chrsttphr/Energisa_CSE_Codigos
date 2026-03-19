@@ -25,7 +25,7 @@ Public Sub CA_Migrar_Zeradas(Optional ByVal SalvarAntesDeExcluir As Boolean = Fa
     colBE = ColLetraParaNumero("BE")
     colBI = ColLetraParaNumero("BI")
 
-    ' ---- Ler dados em memÛria ----
+    ' ---- Ler dados em mem√≥ria ----
     arrBI = wsBase.Range(wsBase.Cells(2, colBI), wsBase.Cells(lr, colBI)).Value2
     arrData = wsBase.Range(wsBase.Cells(1, 1), wsBase.Cells(lr, colBE)).Value2
 
@@ -59,7 +59,7 @@ Public Sub CA_Migrar_Zeradas(Optional ByVal SalvarAntesDeExcluir As Boolean = Fa
     wsZ.Cells(dest, 1).Resize(n, colBE).Value = outArr
     moved = n
 
-    ' ---- Exclus„o em blocos ----
+    ' ---- Exclus√£o em blocos ----
     Dim chunkSize As Long: chunkSize = 4096
     Dim startIdx As Long: startIdx = 1
     Dim endIdx As Long
@@ -81,7 +81,7 @@ Public Sub CA_Migrar_Zeradas(Optional ByVal SalvarAntesDeExcluir As Boolean = Fa
         startIdx = endIdx + 1
     Loop
 
-    MsgBox "ConcluÌdo!" & vbCrLf & _
+    MsgBox "Conclu√≠do!" & vbCrLf & _
            "Linhas migradas: " & moved & vbCrLf & _
            "Tempo: " & FormataTempo(Timer - t0), vbInformation
 
