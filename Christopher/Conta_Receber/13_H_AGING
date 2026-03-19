@@ -28,12 +28,12 @@ Public Sub H_Salvar_Modelo_AGING()
         "(-)ARRECADACAO EM PROCESSO" _
     )
 
-    ' Ler EMPRESA e Ano/MÍs
+    ' Ler EMPRESA e Ano/M√™s
     k1 = wb.Worksheets("RESUMO_Aging").Range("K1").Value
     k2 = wb.Worksheets("RESUMO_Aging").Range("K2").Value
 
     If Len(Trim$(k1 & "")) = 0 Or Len(Trim$(k2 & "")) = 0 Then
-        MsgBox "Preencha RESUMO_Aging!K1 (EMPRESA) e K2 (Ano/MÍs).", vbExclamation
+        MsgBox "Preencha RESUMO_Aging!K1 (EMPRESA) e K2 (Ano/M√™s).", vbExclamation
         GoTo SAIDA
     End If
 
@@ -49,7 +49,7 @@ Public Sub H_Salvar_Modelo_AGING()
     empresa = Replace(empresa, ">", ")")
     empresa = Replace(empresa, "|", "-")
 
-    ' Formatar Ano/MÍs
+    ' Formatar Ano/M√™s
     If IsDate(k2) Then
         anoMes = Format$(CDate(k2), "yyyy_mm")
     Else
@@ -71,11 +71,11 @@ Public Sub H_Salvar_Modelo_AGING()
     Next nm
 
     If validSheets.Count = 0 Then
-        MsgBox "Nenhuma das abas necess·rias existe. Nada a salvar.", vbCritical
+        MsgBox "Nenhuma das abas necess√°rias existe. Nada a salvar.", vbCritical
         GoTo SAIDA
     End If
 
-    ' Copiar somente abas v·lidas
+    ' Copiar somente abas v√°lidas
     Dim arr() As String
     ReDim arr(1 To validSheets.Count)
 
@@ -98,7 +98,7 @@ Public Sub H_Salvar_Modelo_AGING()
         With Application.FileDialog(msoFileDialogFolderPicker)
             .Title = "Escolha a pasta para salvar o arquivo AGING"
             If .Show <> -1 Then
-                MsgBox "OperaÁ„o cancelada.", vbInformation
+                MsgBox "Opera√ß√£o cancelada.", vbInformation
                 GoTo SAIDA
             End If
             folderPath = .SelectedItems(1)
@@ -113,7 +113,7 @@ Public Sub H_Salvar_Modelo_AGING()
 
     MsgBox "Arquivo criado com sucesso:" & vbCrLf & fullName & _
            IIf(missing <> "", vbCrLf & vbCrLf & _
-               "? Abas n„o encontradas:" & missing, ""), vbInformation
+               "? Abas n√£o encontradas:" & missing, ""), vbInformation
 
 SAIDA:
     EndFastMode st
