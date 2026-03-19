@@ -2,17 +2,17 @@ Option Explicit
 
 ' =================================================================================
 ' K_FUNCTIONS
-' MÓDULO CENTRAL DE FUNÇÕES E CONTROLE DE AMBIENTE
+' MÃ“DULO CENTRAL DE FUNÃ‡Ã•ES E CONTROLE DE AMBIENTE
 '
 ' CONSOLIDA:
 ' - Controle de ambiente do Excel
-' - Funções utilitárias de planilha
-' - Funções de linha/coluna
-' - Funções de range dinâmico
-' - Regras de negócio
-' - Funções auxiliares de auditoria
+' - FunÃ§Ãµes utilitÃ¡rias de planilha
+' - FunÃ§Ãµes de linha/coluna
+' - FunÃ§Ãµes de range dinÃ¢mico
+' - Regras de negÃ³cio
+' - FunÃ§Ãµes auxiliares de auditoria
 '
-' MACROS QUE DEPENDEM DESTE MÓDULO:
+' MACROS QUE DEPENDEM DESTE MÃ“DULO:
 ' A, B, C, D, E, F, G, H, I, J
 ' =================================================================================
 
@@ -58,7 +58,7 @@ End Sub
 
 
 ' ================================================================================
-' 2) FUNÇÕES DE PLANILHA
+' 2) FUNÃ‡Ã•ES DE PLANILHA
 ' Usadas em: A, B, C, D, E, F, G, H
 ' ================================================================================
 
@@ -83,7 +83,7 @@ End Function
 
 
 ' ================================================================================
-' 3) FUNÇÕES DE LINHA E COLUNA
+' 3) FUNÃ‡Ã•ES DE LINHA E COLUNA
 ' Usadas em: A, B, C, D, E, F, G
 ' ================================================================================
 
@@ -116,7 +116,7 @@ End Function
 
 
 ' ================================================================================
-' 4) FUNÇÕES PARA RANGE / TABELA DINÂMICA
+' 4) FUNÃ‡Ã•ES PARA RANGE / TABELA DINÃ‚MICA
 ' Usadas em: D
 ' ================================================================================
 
@@ -160,7 +160,7 @@ End Function
 
 
 ' ================================================================================
-' 5) REGRA DE NEGÓCIO – IDENTIFICA ZERO
+' 5) REGRA DE NEGÃ“CIO â€“ IDENTIFICA ZERO
 ' Usada em: C (Migrar Zeradas)
 ' ================================================================================
 
@@ -210,7 +210,7 @@ Public Function FormataTempo(ByVal elapsed As Double) As String
 End Function
 
 ' ================================================================================
-' 7) FUNÇÃO AUXILIAR DE AUDITORIA (USADA NA MACRO J)
+' 7) FUNÃ‡ÃƒO AUXILIAR DE AUDITORIA (USADA NA MACRO J)
 ' ================================================================================
 
 Public Function ExtrairNomeProcedimento(ByVal linha As String, ByVal token As String) As String
@@ -221,7 +221,7 @@ Public Function ExtrairNomeProcedimento(ByVal linha As String, ByVal token As St
 End Function
 
 ' ============================================================
-' Retorna a última coluna de dados permitida por guia
+' Retorna a Ãºltima coluna de dados permitida por guia
 ' Usada principalmente na AtualizaUmaGuia
 ' ============================================================
 Public Function MaxColForSheet(ByVal nomeGuia As String) As Long
