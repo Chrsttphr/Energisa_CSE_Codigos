@@ -1,7 +1,7 @@
-' ===== CONFIGURAÇÕES =====
-' Se True, reposiciona um botão chamado "btn_<NOME_DA_ABA>" duas linhas após o fim dos dados importados.
+' ===== CONFIGURAÃ‡Ã•ES =====
+' Se True, reposiciona um botÃ£o chamado "btn_<NOME_DA_ABA>" duas linhas apÃ³s o fim dos dados importados.
 Private Const MOVER_BOTAO_APOS As Boolean = True
-' Se True, somente o primeiro arquivo mantém o cabeçalho; os demais pulam a 1ª linha.
+' Se True, somente o primeiro arquivo mantÃ©m o cabeÃ§alho; os demais pulam a 1Âª linha.
 Private Const PULAR_CABECALHO_DEPOIS_DO_PRIMEIRO As Boolean = True
 
 ' ===== ATUALIZA UMA GUIA (SIENF: txt + xls | SICON/PDD_SIENF: xls) =====
@@ -107,7 +107,7 @@ Public Sub AtualizaUmaGuia(ByVal nomeGuia As String, ByVal pasta As String, _
         Loop
     Next i
  
-    ' Pós-processamentos
+    ' PÃ³s-processamentos
     Dim lr As Long
     lr = LastUsedRow(wsDestino)
  
