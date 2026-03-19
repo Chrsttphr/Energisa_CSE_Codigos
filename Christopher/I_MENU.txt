@@ -1,0 +1,130 @@
+Option Explicit
+
+Public Sub I_Criar_Menu()
+
+    Dim st As AppState
+    Dim ws As Worksheet
+    Dim rotulos As Variant, macros As Variant, descricoes As Variant
+    Dim i As Long
+    Dim shBtn As Shape, shDesc As Shape, titulo As Shape
+    Dim leftPos As Double, topPos As Double
+    Dim wBtn As Double, hBtn As Double, wDesc As Double
+    Dim y As Double, gap As Double
+    Dim shp As Shape
+
+    On Error GoTo FIM
+    BeginFastMode st
+
+    ' ------------------------------------------------------------
+    ' Criar ou resetar aba Menu
+    ' ------------------------------------------------------------
+    Set ws = Nothing
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets("Menu")
+    On Error GoTo FIM
+
+    If ws Is Nothing Then
+        Set ws = ThisWorkbook.Worksheets.Add(Before:=ThisWorkbook.Sheets(1))
+        ws.Name = "Menu"
+    Else
+        ws.Cells.Clear
+        For Each shp In ws.Shapes
+            shp.Delete
+        Next shp
+    End If
+
+    ' ------------------------------------------------------------
+    ' Layout base
+    ' ------------------------------------------------------------
+    ws.Columns(1).ColumnWidth = 2
+    ws.Columns(2).ColumnWidth = 60
+    ws.Columns(3).ColumnWidth = 2
+
+    ' ------------------------------------------------------------
+    ' Título
+    ' ------------------------------------------------------------
+    Set titulo = ws.Shapes.AddTextbox(msoTextOrientationHorizontal, 20, 12, 720, 30)
+    With titulo
+        .TextFrame2.TextRange.Text = "MENU DE OPERAÇÕES – CONCILIAÇÃO"
+        .TextFrame2.TextRange.Font.Size = 20
+        .TextFrame2.TextRange.Font.Bold = msoTrue
+        .Line.Visible = msoFalse
+    End With
+
+    ' ------------------------------------------------------------
+    ' Dados do menu
+    ' ------------------------------------------------------------
+    rotulos = Array( _
+        "1) Atualizar TODAS as Guias (SICON / PDD_SIENF / SIENF)", _
+        "1a) Atualizar SICON (somente)", _
+        "1b) Atualizar PDD_SIENF (somente)", _
+        "1c) Atualizar SIENF (somente)", _
+        "2) Transferir SICON ? Base_Conciliacao", _
+        "3) Migrar Zeradas (BI = 0 ou ""-"")", _
+        "Extra) Atualizar Tabela Dinâmica do Resumo", _
+        "Fechamento) Copiar PDD_SIENF ? Gabarito" _
+    )
+
+    macros = Array( _
+        "AA_Atualizar_SICON_PDD_SIENF", _
+        "AB_Atualizar_SICON", _
+        "AC_Atualizar_PDD_SIENF", _
+        "AD_Atualizar_SIENF", _
+        "B_Transferir_SICON_para_Base", _
+        "C_Migrar_Zeradas_UI", _
+        "D_Atualizar_Tabela_Dinamica_UI", _
+        "Copiar_PDD_SIENF_para_Gabarito" _
+    )
+
+    descricoes = Array( _
+        "Atualiza simultaneamente todas as bases (SICON, PDD_SIENF e SIENF). Deve ser executada antes das demais rotinas.", _
+        "Atualiza apenas a base SICON.", _
+        "Atualiza apenas a base PDD_SIENF.", _
+        "Atualiza apenas a base SIENF.", _
+        "Transfere os dados importados da SICON para a Base_Conciliacao.", _
+        "Move registros da Base_Conciliacao cujo valor conciliado seja zero para a aba de zerados.", _
+        "Atualiza as tabelas dinâmicas da aba Resumo.", _
+        "Copia os dados atuais da PDD_SIENF para o gabarito de mês anterior." _
+    )
+
+    ' ------------------------------------------------------------
+    ' Desenho dos botões
+    ' ------------------------------------------------------------
+    leftPos = 30
+    topPos = 60
+    wBtn = 680
+    hBtn = 30
+    wDesc = 680
+    gap = 6
+    y = topPos
+
+    For i = LBound(rotulos) To UBound(rotulos)
+
+        Set shBtn = ws.Shapes.AddShape(msoShapeRoundedRectangle, leftPos, y, wBtn, hBtn)
+        With shBtn
+            .TextFrame2.TextRange.Text = rotulos(i)
+            .TextFrame2.TextRange.Font.Size = 11
+            .TextFrame2.TextRange.Font.Bold = msoTrue
+            .Fill.ForeColor.RGB = RGB(0, 120, 215)
+            .Line.Visible = msoFalse
+            .TextFrame2.TextRange.Font.Fill.ForeColor.RGB = RGB(255, 255, 255)
+            .OnAction = "'" & ThisWorkbook.Name & "'!" & macros(i)
+        End With
+
+        Set shDesc = ws.Shapes.AddTextbox(msoTextOrientationHorizontal, leftPos, y + hBtn + 2, wDesc, 40)
+        With shDesc
+            .TextFrame2.TextRange.Text = descricoes(i)
+            .TextFrame2.TextRange.Font.Size = 10
+            .Line.Visible = msoFalse
+            .Fill.Visible = msoFalse
+        End With
+
+        y = y + hBtn + shDesc.Height + 14 + gap
+    Next i
+
+    MsgBox "Menu criado/atualizado com sucesso!", vbInformation
+
+FIM:
+    EndFastMode st
+End Sub
+

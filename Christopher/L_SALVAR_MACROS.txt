@@ -1,0 +1,41 @@
+Sub ExportarMacrosParaTXT()
+
+    Dim vbComp As Object
+    Dim vbMod As Object
+    Dim caminho As String
+    Dim arquivo As String
+    Dim linha As Long
+    Dim conteudo As String
+    Dim f As Integer
+
+    ' Escolher pasta
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .Title = "Escolha a pasta para salvar os arquivos TXT"
+        If .Show <> -1 Then Exit Sub
+        caminho = .SelectedItems(1) & "\"
+    End With
+
+    ' Percorre todos os componentes VBA
+    For Each vbComp In ThisWorkbook.VBProject.VBComponents
+        Set vbMod = vbComp.CodeModule
+        conteudo = ""
+
+        ' Lê linha por linha do código
+        For linha = 1 To vbMod.CountOfLines
+            conteudo = conteudo & vbMod.Lines(linha, 1) & vbCrLf
+        Next linha
+
+        ' Define nome do arquivo
+        arquivo = caminho & vbComp.Name & ".txt"
+
+        ' Grava o TXT
+        f = FreeFile
+        Open arquivo For Output As #f
+        Print #f, conteudo
+        Close #f
+    Next vbComp
+
+    MsgBox "Macros exportadas com sucesso!", vbInformation
+
+End Sub
+

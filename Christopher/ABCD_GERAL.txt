@@ -1,0 +1,173 @@
+' ===== CONFIGURAÇÕES =====
+' Se True, reposiciona um botão chamado "btn_<NOME_DA_ABA>" duas linhas após o fim dos dados importados.
+Private Const MOVER_BOTAO_APOS As Boolean = True
+' Se True, somente o primeiro arquivo mantém o cabeçalho; os demais pulam a 1ª linha.
+Private Const PULAR_CABECALHO_DEPOIS_DO_PRIMEIRO As Boolean = True
+
+' ===== ATUALIZA UMA GUIA (SIENF: txt + xls | SICON/PDD_SIENF: xls) =====
+Public Sub AtualizaUmaGuia(ByVal nomeGuia As String, ByVal pasta As String, _
+                            ByRef totalArquivos As Long, ByRef totalLinhas As Long)
+ 
+    Dim wsDestino As Worksheet
+    Dim padroes As Variant, padrao As String
+    Dim arquivo As String, caminho As String, ext As String
+    Dim proximaLinha As Long, primeiraGuia As Boolean
+    Dim wbSrc As Workbook, wsSrc As Worksheet
+    Dim rngSrc As Range, rngCopia As Range, rngDestino As Range
+    Dim linhas As Long, colunas As Long, colunasDestino As Long
+    Dim maxCol As Long, limiteColsDados As Long, colDestinoInicial As Long
+    Dim i As Long
+ 
+    ' Aba destino
+    Set wsDestino = GetWorksheetByNameCI(ThisWorkbook, nomeGuia)
+    If wsDestino Is Nothing Then
+        Set wsDestino = ThisWorkbook.Worksheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+        wsDestino.Name = nomeGuia
+    End If
+ 
+    maxCol = MaxColForSheet(nomeGuia)
+    If maxCol <= 0 Then maxCol = 16384
+ 
+    ' Regras por guia
+    If UCase$(nomeGuia) = "SIENF" Then
+        colDestinoInicial = ColLetraParaNumero("B")
+        limiteColsDados = ColLetraParaNumero("AA") - colDestinoInicial + 1
+        wsDestino.Range(wsDestino.Cells(1, colDestinoInicial), _
+                        wsDestino.Cells(wsDestino.Rows.Count, ColLetraParaNumero("AA"))).ClearContents
+        padroes = Array("*" & nomeGuia & "*.txt", "*" & nomeGuia & "*.xls")
+    Else
+        colDestinoInicial = 1
+        limiteColsDados = maxCol
+        wsDestino.Range(wsDestino.Cells(1, 1), _
+                        wsDestino.Cells(wsDestino.Rows.Count, maxCol)).ClearContents
+        padroes = Array("*" & nomeGuia & "*.xls")
+    End If
+ 
+    proximaLinha = 1
+    primeiraGuia = True
+ 
+    ' Loop de arquivos
+    For i = LBound(padroes) To UBound(padroes)
+        padrao = padroes(i)
+        arquivo = Dir(AddSlash(pasta) & padrao)
+ 
+        Do While Len(arquivo) > 0
+            If Left$(arquivo, 2) <> "~$" Then
+                caminho = AddSlash(pasta) & arquivo
+                ext = LCase$(Mid$(arquivo, InStrRev(arquivo, ".") + 1))
+ 
+                Set wbSrc = Nothing
+                Set wsSrc = Nothing
+ 
+                ' Abrir origem
+                If UCase$(nomeGuia) = "SIENF" And ext = "txt" Then
+                    Set wbSrc = OpenTextAsWorkbook(caminho)
+                    If Not wbSrc Is Nothing Then Set wsSrc = wbSrc.Worksheets(1)
+                ElseIf ext = "xls" Then
+                    Set wbSrc = Workbooks.Open(caminho, ReadOnly:=True, UpdateLinks:=False)
+                    If Not wbSrc Is Nothing Then
+                        Set wsSrc = GetWorksheetByNameCI(wbSrc, nomeGuia)
+                        If wsSrc Is Nothing Then Set wsSrc = wbSrc.Worksheets(1)
+                    End If
+                End If
+ 
+                If Not wsSrc Is Nothing Then
+                    Set rngSrc = SafeUsedRange(wsSrc)
+                    If Not rngSrc Is Nothing Then
+ 
+                        If Not primeiraGuia And PULAR_CABECALHO_DEPOIS_DO_PRIMEIRO _
+                           And rngSrc.Rows.Count > 1 Then
+                            Set rngCopia = rngSrc.Offset(1).Resize(rngSrc.Rows.Count - 1)
+                        Else
+                            Set rngCopia = rngSrc
+                            primeiraGuia = False
+                        End If
+ 
+                        linhas = rngCopia.Rows.Count
+                        colunas = rngCopia.Columns.Count
+                        colunasDestino = Application.Min(colunas, limiteColsDados)
+ 
+                        If linhas > 0 And colunasDestino > 0 Then
+                            Set rngDestino = wsDestino.Cells(proximaLinha, colDestinoInicial) _
+                                              .Resize(linhas, colunasDestino)
+ 
+                            ' >>> Cola somente VALORES (layout do destino intacto)
+                            rngDestino.Value = rngCopia.Resize(linhas, colunasDestino).Value
+ 
+                            proximaLinha = proximaLinha + linhas
+                            totalLinhas = totalLinhas + linhas
+                            totalArquivos = totalArquivos + 1
+                        End If
+                    End If
+                End If
+ 
+                If Not wbSrc Is Nothing Then wbSrc.Close SaveChanges:=False
+            End If
+            arquivo = Dir()
+        Loop
+    Next i
+ 
+    ' Pós-processamentos
+    Dim lr As Long
+    lr = LastUsedRow(wsDestino)
+ 
+    If UCase$(nomeGuia) = "SIENF" And lr >= 2 Then
+        wsDestino.Range("A2:A" & lr).FormulaR1C1 = "=RC18"
+    End If
+ 
+    If UCase$(nomeGuia) = "PDD_SIENF" And lr >= 2 Then
+        wsDestino.Range("AO2:AO" & lr).formulaLocal = _
+            "=SEERRO(PROCV(G2;Base_Conciliacao!$F:$Q;12;0)-L2;PROCV(H2;Base_Conciliacao!BG:BI;3;0)-L2)"
+        wsDestino.Range("AP2:AP" & lr).formulaLocal = _
+            "=PROCV(G2;PDD_SIENF_mes_anterior!G:NA;34;0)"
+    End If
+End Sub
+
+Public Sub AB_Atualizar_SICON()
+    Dim st As AppState
+    Dim pasta As String
+    Dim dummyA As Long, dummyB As Long
+
+    pasta = ObterPasta()
+    If Len(pasta) = 0 Then Exit Sub
+
+    On Error GoTo SAIDA
+    BeginFastMode st
+    AtualizaUmaGuia "SICON", pasta, dummyA, dummyB
+
+SAIDA:
+    EndFastMode st
+End Sub
+
+Public Sub AC_Atualizar_PDD_SIENF()
+    Dim st As AppState
+    Dim pasta As String
+    Dim dummyA As Long, dummyB As Long
+
+    pasta = ObterPasta()
+    If Len(pasta) = 0 Then Exit Sub
+
+    On Error GoTo SAIDA
+    BeginFastMode st
+    AtualizaUmaGuia "PDD_SIENF", pasta, dummyA, dummyB
+
+SAIDA:
+    EndFastMode st
+End Sub
+
+Public Sub AD_Atualizar_SIENF()
+    Dim st As AppState
+    Dim pasta As String
+    Dim dummyA As Long, dummyB As Long
+
+    pasta = ObterPasta()
+    If Len(pasta) = 0 Then Exit Sub
+
+    On Error GoTo SAIDA
+    BeginFastMode st
+    AtualizaUmaGuia "SIENF", pasta, dummyA, dummyB
+
+SAIDA:
+    EndFastMode st
+End Sub
+

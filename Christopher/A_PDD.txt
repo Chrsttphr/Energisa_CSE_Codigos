@@ -1,0 +1,83 @@
+Option Explicit
+
+' =================================================================================
+' MACRO — SALVAR PDD_SIENF MÊS ANTERIOR (GABARITO)
+'
+' AUDITORIA:
+' - Controle de ambiente padronizado (BeginFastMode / EndFastMode)
+' - Uso apenas de funções do K_FUNCTIONS
+' - Cópia apenas de valores
+' - Preserva formatação numérica
+'
+' USO:
+' - Executar no fechamento mensal
+' =================================================================================
+
+Public Sub A_Salvar_PDD_SIENF_Mes_Anterior()
+
+    Dim st As AppState
+    Dim wsOrig As Worksheet, wsDest As Worksheet
+    Dim lr As Long, lc As Long
+    Dim rngO As Range, rngD As Range
+    Dim msg As String
+
+    On Error GoTo TratarErro
+    BeginFastMode st
+
+    ' ------------------------------------------------------------
+    ' 1) Localizar origem
+    ' ------------------------------------------------------------
+    Set wsOrig = GetWorksheetByNameCI(ThisWorkbook, "PDD_SIENF")
+    If wsOrig Is Nothing Then
+        Err.Raise 5, , "A aba 'PDD_SIENF' não foi encontrada."
+    End If
+
+    ' ------------------------------------------------------------
+    ' 2) Determinar última linha e coluna
+    ' ------------------------------------------------------------
+    lr = LastUsedRow(wsOrig)
+    If lr < 2 Then
+        msg = "Nenhum dado encontrado em 'PDD_SIENF'."
+        MsgBox msg, vbInformation, "Copiar PDD_SIENF ? Gabarito"
+        GoTo FIM
+    End If
+
+    lc = Application.Max( _
+            ColLetraParaNumero("AP"), _
+            UltimaColunaUsada(wsOrig) _
+         )
+
+    Set rngO = wsOrig.Range(wsOrig.Cells(1, 1), wsOrig.Cells(lr, lc))
+
+    ' ------------------------------------------------------------
+    ' 3) Criar / obter destino
+    ' ------------------------------------------------------------
+    Set wsDest = GetOrCreateSheet("PDD_SIENF_mes_anterior")
+    wsDest.Cells.ClearContents
+
+    Set rngD = wsDest.Cells(1, 1).Resize(rngO.Rows.Count, rngO.Columns.Count)
+
+    ' ------------------------------------------------------------
+    ' 4) Copiar valores
+    ' ------------------------------------------------------------
+    rngD.Value = rngO.Value
+
+    ' Copiar formatação numérica (não crítica)
+    On Error Resume Next
+    rngD.NumberFormat = rngO.NumberFormat
+    On Error GoTo TratarErro
+
+    MsgBox "Cópia concluída:" & vbCrLf & _
+           rngO.Rows.Count & " linhas × " & rngO.Columns.Count & " colunas.", _
+           vbInformation, "Copiar PDD_SIENF ? Gabarito"
+
+FIM:
+    EndFastMode st
+    Exit Sub
+
+TratarErro:
+    EndFastMode st
+    MsgBox "Erro " & Err.Number & ": " & Err.Description, _
+           vbExclamation, "Copiar PDD_SIENF ? Gabarito"
+End Sub
+

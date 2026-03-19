@@ -1,0 +1,11 @@
+Option Explicit
+
+Public Sub D_Atualizar_Tabela_Dinamica_UI()
+    On Error GoTo EH
+    DA_Atualizar_Tabela_Dinamica
+    MsgBox "Tabelas Dinâmicas atualizadas com sucesso!", vbInformation
+    Exit Sub
+EH:
+    MsgBox "Falha ao atualizar: " & Err.Description, vbExclamation
+End Sub
+

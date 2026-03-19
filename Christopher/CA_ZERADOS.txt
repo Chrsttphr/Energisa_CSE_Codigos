@@ -1,0 +1,91 @@
+Option Explicit
+
+Public Sub CA_Migrar_Zeradas(Optional ByVal SalvarAntesDeExcluir As Boolean = False)
+
+    Dim st As AppState
+    Dim wsBase As Worksheet, wsZ As Worksheet
+    Dim lr As Long, colBE As Long, colBI As Long
+    Dim dest As Long, moved As Long
+    Dim arrBI As Variant, arrData As Variant, outArr As Variant
+    Dim i As Long, k As Long
+    Dim t0 As Double
+    Dim rowNums() As Long
+    Dim n As Long
+
+    t0 = Timer
+    On Error GoTo FIM
+    BeginFastMode st
+
+    Set wsBase = GetOrCreateSheet("Base_Conciliacao")
+    Set wsZ = GetOrCreateSheet("Valores_Zerados_Conciliacao")
+
+    lr = LastUsedRow(wsBase)
+    If lr < 2 Then GoTo FIM
+
+    colBE = ColLetraParaNumero("BE")
+    colBI = ColLetraParaNumero("BI")
+
+    ' ---- Ler dados em memória ----
+    arrBI = wsBase.Range(wsBase.Cells(2, colBI), wsBase.Cells(lr, colBI)).Value2
+    arrData = wsBase.Range(wsBase.Cells(1, 1), wsBase.Cells(lr, colBE)).Value2
+
+    ReDim rowNums(1 To lr - 1)
+    n = 0
+
+    For i = 1 To UBound(arrBI, 1)
+        If EhZero(arrBI(i, 1)) Then
+            n = n + 1
+            rowNums(n) = i + 1
+        End If
+    Next i
+
+    If n = 0 Then
+        MsgBox "Nenhuma linha com BI = 0, -0 ou ""-"" encontrada.", vbInformation
+        GoTo FIM
+    End If
+
+    ReDim Preserve rowNums(1 To n)
+    ReDim outArr(1 To n, 1 To colBE)
+
+    For k = 1 To n
+        Dim r As Long
+        r = rowNums(k)
+        For i = 1 To colBE
+            outArr(k, i) = arrData(r, i)
+        Next i
+    Next k
+
+    dest = Application.Max(2, NextFreeRow(wsZ, 1))
+    wsZ.Cells(dest, 1).Resize(n, colBE).Value = outArr
+    moved = n
+
+    ' ---- Exclusão em blocos ----
+    Dim chunkSize As Long: chunkSize = 4096
+    Dim startIdx As Long: startIdx = 1
+    Dim endIdx As Long
+    Dim delRange As Range
+
+    Do While startIdx <= n
+        endIdx = Application.Min(startIdx + chunkSize - 1, n)
+        Set delRange = Nothing
+
+        For k = startIdx To endIdx
+            If delRange Is Nothing Then
+                Set delRange = wsBase.Rows(rowNums(k))
+            Else
+                Set delRange = Union(delRange, wsBase.Rows(rowNums(k)))
+            End If
+        Next k
+
+        If Not delRange Is Nothing Then delRange.Delete
+        startIdx = endIdx + 1
+    Loop
+
+    MsgBox "Concluído!" & vbCrLf & _
+           "Linhas migradas: " & moved & vbCrLf & _
+           "Tempo: " & FormataTempo(Timer - t0), vbInformation
+
+FIM:
+    EndFastMode st
+End Sub
+

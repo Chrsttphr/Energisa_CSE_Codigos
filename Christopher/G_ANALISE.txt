@@ -1,0 +1,141 @@
+Option Explicit
+ 
+Public Sub G_Atualizar_Em_Analise()
+ 
+    Dim st As AppState
+    Dim wsBase As Worksheet, wsA As Worksheet
+    Dim lrBase As Long, lrA As Long
+    Dim colBJ As Long, colBK As Long, colBL As Long
+    Dim qtdRem As Long, qtdAdd As Long
+    Dim r As Long, dest As Long
+    Dim rngBase As Range, rngVis As Range
+    Dim arrStatus As Variant
+    Dim formulaBL As String
+    Dim maxAno As Long, maxMes As Long
+    Dim vAno As Variant, vMes As Variant
+    Dim t0 As Double, elapsed As Double
+ 
+    t0 = Timer
+    On Error GoTo SAIDA
+    BeginFastMode st
+ 
+    Set wsBase = GetOrCreateSheet("Base_Conciliacao")
+    Set wsA = GetOrCreateSheet("Em_analise")
+ 
+    colBJ = ColLetraParaNumero("BJ")
+    colBK = ColLetraParaNumero("BK")
+    colBL = ColLetraParaNumero("BL")
+ 
+    ' ============================================================
+    ' 1) Remover linhas marcadas como "Remover"
+    ' ============================================================
+    lrA = LastUsedRow(wsA)
+ 
+    If lrA >= 2 Then
+        For r = lrA To 2 Step -1
+            If LCase$(Trim$(CStr(wsA.Cells(r, colBL).Value))) = "remover" Then
+                wsA.Rows(r).Delete
+                qtdRem = qtdRem + 1
+            End If
+        Next r
+    End If
+ 
+    ' Guarda fórmula BL
+    If wsA.Cells(2, colBL).HasFormula Then
+        formulaBL = wsA.Cells(2, colBL).Formula
+    End If
+ 
+    ' ============================================================
+    ' 2) Identificar período mais recente
+    ' ============================================================
+    lrBase = LastUsedRow(wsBase)
+    maxAno = -1: maxMes = -1
+ 
+    For r = 2 To lrBase
+        vAno = wsBase.Cells(r, 3).Value
+        vMes = wsBase.Cells(r, 4).Value
+ 
+        If IsNumeric(vAno) Then
+            If CLng(vAno) > maxAno Then
+                maxAno = CLng(vAno)
+                maxMes = -1
+            End If
+            If CLng(vAno) = maxAno And IsNumeric(vMes) Then
+                If CLng(vMes) > maxMes Then maxMes = CLng(vMes)
+            End If
+        End If
+    Next r
+ 
+    If maxAno < 0 Or maxMes < 0 Then GoTo SAIDA
+ 
+    ' ============================================================
+    ' 3) Filtrar Base
+    ' ============================================================
+    Set rngBase = wsBase.Range(wsBase.Cells(1, 1), wsBase.Cells(lrBase, colBK))
+ 
+    arrStatus = Array( _
+        "Diferença de centavos/reais", _
+        "NF Anulação/Anulada", _
+        "Enviado ao financeiro para análise", _
+        "Migração - saldo/boletos", _
+        "Erro contabilização de impostos (depois de retorno financeiro)", _
+        "Em análise", _
+        "Enviado ao Fiscal para verificar", _
+        "Ajustado FLC mês seguinte" _
+    )
+ 
+    If wsBase.AutoFilterMode Then wsBase.ShowAllData
+ 
+    rngBase.AutoFilter Field:=colBJ, Criteria1:=arrStatus, Operator:=xlFilterValues
+    rngBase.AutoFilter Field:=3, Criteria1:=maxAno
+    rngBase.AutoFilter Field:=4, Criteria1:=maxMes
+ 
+    On Error Resume Next
+    Set rngVis = rngBase.Offset(1, 0).Resize(rngBase.Rows.Count - 1) _
+                          .SpecialCells(xlCellTypeVisible)
+    On Error GoTo SAIDA
+ 
+    dest = NextFreeRow(wsA, 1)
+ 
+    If Not rngVis Is Nothing Then
+        Dim cel As Range
+        For Each cel In rngVis.Columns(1).Cells
+            wsA.Cells(dest, 1).Resize(1, colBK).Value = _
+                wsBase.Cells(cel.Row, 1).Resize(1, colBK).Value
+            dest = dest + 1
+            qtdAdd = qtdAdd + 1
+        Next cel
+    End If
+ 
+    If wsBase.AutoFilterMode Then wsBase.ShowAllData
+ 
+    ' ============================================================
+    ' 4) Reaplicar fórmula BL
+    ' ============================================================
+    Dim lrDepois As Long
+    lrDepois = LastUsedRow(wsA)
+ 
+    If Len(formulaBL) > 0 And lrDepois > lrA Then
+        wsA.Range(wsA.Cells(lrA + 1, colBL), _
+                  wsA.Cells(lrDepois, colBL)).Formula = formulaBL
+    End If
+ 
+SAIDA:
+    EndFastMode st
+ 
+    elapsed = (Timer - t0 + 86400) Mod 86400
+ 
+    If Err.Number <> 0 Then
+        MsgBox "Erro " & Err.Number & ": " & Err.Description & vbCrLf & _
+               "Tempo: " & FormataTempo(elapsed), vbExclamation
+    Else
+        MsgBox "Atualização concluída!" & vbCrLf & vbCrLf & _
+               "Linhas removidas: " & qtdRem & vbCrLf & _
+               "Linhas adicionadas: " & qtdAdd & vbCrLf & _
+               "Período: " & maxAno & "/" & Format$(maxMes, "00") & vbCrLf & _
+               "Tempo: " & FormataTempo(elapsed), vbInformation
+    End If
+ 
+End Sub
+
+

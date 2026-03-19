@@ -1,0 +1,108 @@
+Option Explicit
+
+Public Sub EA_Atualizar_PDD_AGING()
+
+    Dim st As AppState
+    Dim wsOut As Worksheet, wsBase As Worksheet
+    Dim colBJ As Long, colBI As Long
+    Dim lrBase As Long, dest As Long
+    Dim rngBase As Range, rngVis As Range
+    Dim mapBase As Variant
+    Dim r As Range, i As Long
+    Dim maxAno As Long, maxMes As Long
+    Dim vAno As Variant, vMes As Variant
+    Dim t0 As Double
+    Dim qtdAdd As Long, iter As Long
+
+    t0 = Timer
+    On Error GoTo FIM
+    BeginFastMode st
+
+    Application.StatusBar = "Atualizando PDD_AGING..."
+
+    Set wsOut = GetOrCreateSheet("PDD_AGING")
+    Set wsBase = GetOrCreateSheet("Base_Conciliacao")
+
+    colBJ = ColLetraParaNumero("BJ") ' STATUS
+    colBI = ColLetraParaNumero("Q")  ' VALOR
+
+    ' ============================================================
+    ' 1) Identificar período mais recente (Ano/Mês)
+    ' ============================================================
+    lrBase = LastUsedRow(wsBase)
+    maxAno = -1
+    maxMes = -1
+
+    For i = 2 To lrBase
+        vAno = wsBase.Cells(i, 3).Value
+        vMes = wsBase.Cells(i, 4).Value
+
+        If IsNumeric(vAno) Then
+            If CLng(vAno) > maxAno Then
+                maxAno = CLng(vAno)
+                maxMes = -1
+            End If
+            If CLng(vAno) = maxAno And IsNumeric(vMes) Then
+                If CLng(vMes) > maxMes Then maxMes = CLng(vMes)
+            End If
+        End If
+    Next i
+
+    If maxAno < 0 Or maxMes < 0 Then Err.Raise 5, , "Base sem Ano/Mês válido."
+
+    ' ============================================================
+    ' 2) Filtrar Base
+    ' ============================================================
+    Set rngBase = wsBase.Range(wsBase.Cells(1, 1), wsBase.Cells(lrBase, ColLetraParaNumero("BK")))
+
+    If wsBase.AutoFilterMode Then wsBase.ShowAllData
+
+    rngBase.AutoFilter Field:=colBJ, Criteria1:="=PDD"
+    rngBase.AutoFilter Field:=3, Criteria1:=maxAno
+    rngBase.AutoFilter Field:=4, Criteria1:=maxMes
+
+    On Error Resume Next
+    Set rngVis = wsBase.Range(wsBase.Cells(2, 1), wsBase.Cells(lrBase, 1)) _
+                        .SpecialCells(xlCellTypeVisible)
+    On Error GoTo FIM
+
+    ' ============================================================
+    ' 3) Copiar dados mapeados
+    ' ============================================================
+    dest = NextFreeRow(wsOut, 1)
+
+    mapBase = Array( _
+        Array(1, 1), _
+        Array(2, 3), _
+        Array(3, 4), _
+        Array(4, 5), _
+        Array(5, 6), _
+        Array(8, 14), _
+        Array(9, 15), _
+        Array(14, 16), _
+        Array(15, colBI), _
+        Array(16, colBJ) _
+    )
+
+    If Not rngVis Is Nothing Then
+        For Each r In rngVis
+            iter = iter + 1
+            If (iter Mod 2000) = 0 Then DoEvents
+
+            For i = LBound(mapBase) To UBound(mapBase)
+                wsOut.Cells(dest, mapBase(i)(0)).Value2 = _
+                    wsBase.Cells(r.Row, mapBase(i)(1)).Value2
+            Next i
+
+            dest = dest + 1
+            qtdAdd = qtdAdd + 1
+        Next r
+    End If
+
+    If wsBase.AutoFilterMode Then wsBase.ShowAllData
+
+FIM:
+    EndFastMode st
+    Application.StatusBar = False
+End Sub
+

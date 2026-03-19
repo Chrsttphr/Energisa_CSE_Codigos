@@ -1,0 +1,147 @@
+Option Explicit
+
+' =================================================================================
+' MACRO B — TRANSFERIR SICON PARA BASE_CONCILIACAO (VERSÃO CORRIGIDA)
+'
+' - Copia SICON A:Q via array (rápido)
+' - Aplica fórmulas BF:BI e BL:BO por coluna (correto, sem erro 13)
+' - Converte fórmulas em valores para reduzir peso
+'
+' DEPENDE DE:
+' - K_FUNCTIONS (BeginFastMode, EndFastMode, helpers)
+' =================================================================================
+
+Public Sub B_Transferir_SICON_para_Base()
+
+    Dim st As AppState
+    Dim wsS As Worksheet, wsB As Worksheet
+    Dim lrS As Long, lrB As Long, lastRowDest As Long
+    Dim rngS As Range, rngD As Range
+    Dim nRows As Long, nCols As Long
+    Dim linhasImportadas As Long
+    Dim t0 As Double
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("Base_Conciliacao")
+    
+    ' Parâmetros
+    Const PRIMEIRA_LINHA_DADOS As Long = 2
+    Const ULT_COL_ORIGEM As String = "Q"
+    Const CHUNK_SIZE As Long = 5000
+
+    t0 = Timer
+    On Error GoTo TRATA_ERRO
+    BeginFastMode st
+
+    ' -----------------------------------------------------------------
+    ' Origem e destino
+    ' -----------------------------------------------------------------
+    Set wsS = GetWorksheetByNameCI(ThisWorkbook, "SICON")
+    Set wsB = GetOrCreateSheet("Base_Conciliacao")
+
+    If wsS Is Nothing Then Err.Raise 5, , "A aba SICON não foi encontrada."
+
+    lrS = LastUsedRow(wsS)
+    If lrS < PRIMEIRA_LINHA_DADOS Then GoTo FIM_OK
+
+    Set rngS = wsS.Range(wsS.Cells(PRIMEIRA_LINHA_DADOS, 1), _
+                          wsS.Cells(lrS, ColLetraParaNumero(ULT_COL_ORIGEM)))
+
+    nRows = rngS.Rows.Count
+    nCols = rngS.Columns.Count
+
+    lrB = NextFreeRow(wsB, 1)
+    Set rngD = wsB.Cells(lrB, 1).Resize(nRows, nCols)
+
+    ' -----------------------------------------------------------------
+    ' Copiar A:Q por ARRAY (rápido)
+    ' -----------------------------------------------------------------
+    Dim v As Variant, i As Long, j As Long
+    v = rngS.Value2
+
+    For i = 1 To nRows
+        For j = 1 To nCols
+            If IsError(v(i, j)) Then v(i, j) = ""
+        Next j
+    Next i
+
+    rngD.Value2 = v
+    linhasImportadas = nRows
+
+    ' -----------------------------------------------------------------
+    ' Capturar fórmulas MODELO da linha 2 (UMA POR COLUNA)
+    ' -----------------------------------------------------------------
+    Dim fBF As String, fBG As String, fBH As String, fBI As String
+    Dim fBL As String, fBM As String, fBN As String, fBO As String
+
+    fBF = wsB.Range("BF2").FormulaR1C1
+    fBG = wsB.Range("BG2").FormulaR1C1
+    fBH = wsB.Range("BH2").FormulaR1C1
+    fBI = wsB.Range("BI2").FormulaR1C1
+
+    fBL = wsB.Range("BL2").FormulaR1C1
+    fBM = wsB.Range("BM2").FormulaR1C1
+    fBN = wsB.Range("BN2").FormulaR1C1
+    fBO = wsB.Range("BO2").FormulaR1C1
+
+' -----------------------------------------------------------------
+' Aplicar fórmulas em BLOCOS (chunking)
+' -----------------------------------------------------------------
+Dim startRow As Long, endRow As Long
+
+lastRowDest = lrB + nRows - 1
+startRow = lrB
+
+Do While startRow <= lastRowDest
+
+    endRow = Application.Min(startRow + CHUNK_SIZE - 1, lastRowDest)
+
+    With wsB
+        ' BF:BI — fórmulas
+        .Range("BF" & startRow & ":BF" & endRow).FormulaR1C1 = fBF
+        .Range("BG" & startRow & ":BG" & endRow).FormulaR1C1 = fBG
+        .Range("BH" & startRow & ":BH" & endRow).FormulaR1C1 = fBH
+        .Range("BI" & startRow & ":BI" & endRow).FormulaR1C1 = fBI
+
+        ' BL:BO — fórmulas
+        .Range("BL" & startRow & ":BL" & endRow).FormulaR1C1 = fBL
+        .Range("BM" & startRow & ":BM" & endRow).FormulaR1C1 = fBM
+        .Range("BN" & startRow & ":BN" & endRow).FormulaR1C1 = fBN
+        .Range("BO" & startRow & ":BO" & endRow).FormulaR1C1 = fBO
+
+        ' Calcular somente o bloco
+        .Range("BF" & startRow & ":BO" & endRow).Calculate
+
+        ' Converter fórmulas em valores (alívio de peso)
+        .Range("BF" & startRow & ":BO" & endRow).Value = _
+            .Range("BF" & startRow & ":BO" & endRow).Value
+
+        ' ---------------------------------------------------------
+        ' FORMATAÇÃO FINAL DO BLOCO
+        ' ---------------------------------------------------------
+
+        ' BI ? número com milhar (.) e negativo entre parênteses
+        
+        ws.Range("BI2").Copy
+        ws.Range("BI" & startRow & ":BI" & endRow).PasteSpecial xlPasteFormats
+        Application.CutCopyMode = False
+        
+        ' BL ? data abreviada
+        .Range("BL" & startRow & ":BL" & endRow).NumberFormat = "dd/mm/yyyy"
+        
+    End With
+    startRow = endRow + 1
+Loop
+
+FIM_OK:
+    EndFastMode st
+
+    MsgBox "Concluído!" & vbCrLf & _
+           "Linhas importadas: " & linhasImportadas & vbCrLf & _
+           "Tempo: " & FormataTempo(Timer - t0), vbInformation
+    Exit Sub
+
+TRATA_ERRO:
+    EndFastMode st
+    MsgBox "Erro " & Err.Number & ": " & Err.Description, vbExclamation
+End Sub
+

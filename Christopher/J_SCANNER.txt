@@ -1,0 +1,82 @@
+Option Explicit
+
+Public Sub J_Listar_Nomes_Duplicados()
+
+    Dim prj As Object
+    Dim cmp As Object
+    Dim dic As Object
+    Dim linha As String
+    Dim nomeProc As String
+    Dim tipoProc As String
+    Dim modulo As String
+    Dim linhas() As String
+    Dim msg As String
+    Dim i As Long
+    Dim k As Variant
+
+    On Error Resume Next
+    Set prj = Application.VBE.ActiveVBProject
+    On Error GoTo 0
+
+    If prj Is Nothing Then
+        MsgBox "Habilite a opção:" & vbCrLf & _
+               """Trust access to the VBA project object model""", vbExclamation
+        Exit Sub
+    End If
+
+    Set dic = CreateObject("Scripting.Dictionary")
+
+    For Each cmp In prj.VBComponents
+        If cmp.CodeModule.CountOfLines = 0 Then GoTo ProximoModulo
+
+        linhas = Split(cmp.CodeModule.Lines(1, cmp.CodeModule.CountOfLines), vbCrLf)
+        modulo = cmp.Name
+
+        For i = LBound(linhas) To UBound(linhas)
+
+            linha = Trim$(linhas(i))
+            If linha = "" Then GoTo proximaLinha
+            If Left$(linha, 1) = "'" Then GoTo proximaLinha
+
+            linha = Replace(linha, "Public ", "", , , vbTextCompare)
+            linha = Replace(linha, "Private ", "", , , vbTextCompare)
+            linha = Replace(linha, "Friend ", "", , , vbTextCompare)
+
+            If LCase$(Left$(linha, 3)) = "sub" Then
+                tipoProc = "SUB"
+                nomeProc = ExtrairNomeProcedimento(linha, "Sub")
+
+            ElseIf LCase$(Left$(linha, 8)) = "function" Then
+                tipoProc = "FUNCTION"
+                nomeProc = ExtrairNomeProcedimento(linha, "Function")
+
+            Else
+                GoTo proximaLinha
+            End If
+
+            If nomeProc <> "" Then
+                If Not dic.Exists(nomeProc) Then
+                    dic.Add nomeProc, tipoProc & " -> " & modulo
+                Else
+                    dic(nomeProc) = dic(nomeProc) & ", " & modulo
+                End If
+            End If
+
+proximaLinha:
+        Next i
+
+ProximoModulo:
+    Next cmp
+
+    msg = ""
+    For Each k In dic.Keys
+        If InStr(dic(k), ",") > 0 Then
+            msg = msg & k & " => " & dic(k) & vbCrLf
+        End If
+    Next k
+
+    If msg = "" Then msg = "? Nenhum Sub ou Function duplicado encontrado."
+
+    MsgBox msg, vbInformation, "Auditoria de Procedimentos Duplicados"
+End Sub
+

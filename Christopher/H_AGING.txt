@@ -1,0 +1,127 @@
+Option Explicit
+
+Public Sub H_Salvar_Modelo_AGING()
+
+    Dim st As AppState
+    Dim wb As Workbook, wbNew As Workbook
+    Dim ws As Worksheet, wsNew As Worksheet
+    Dim sheetsToCopy As Variant, nm As Variant
+    Dim validSheets As Collection
+    Dim folderPath As String, fullName As String
+    Dim anoMes As String, empresa As String
+    Dim k1 As Variant, k2 As Variant
+    Dim missing As String
+    Dim i As Long
+
+    On Error GoTo TrataErro
+    BeginFastMode st
+
+    Set wb = ThisWorkbook
+    Set validSheets = New Collection
+
+    ' Abas desejadas
+    sheetsToCopy = Array( _
+        "RESUMO_Aging", _
+        "Pendente", _
+        "Em_analise", _
+        "PDD_AGING", _
+        "(-)ARRECADACAO EM PROCESSO" _
+    )
+
+    ' Ler EMPRESA e Ano/Mês
+    k1 = wb.Worksheets("RESUMO_Aging").Range("K1").Value
+    k2 = wb.Worksheets("RESUMO_Aging").Range("K2").Value
+
+    If Len(Trim$(k1 & "")) = 0 Or Len(Trim$(k2 & "")) = 0 Then
+        MsgBox "Preencha RESUMO_Aging!K1 (EMPRESA) e K2 (Ano/Mês).", vbExclamation
+        GoTo SAIDA
+    End If
+
+    ' Normalizar nome da empresa
+    empresa = Trim$(CStr(k1))
+    empresa = Replace(empresa, "\", "-")
+    empresa = Replace(empresa, "/", "-")
+    empresa = Replace(empresa, ":", "-")
+    empresa = Replace(empresa, "*", "-")
+    empresa = Replace(empresa, "?", "")
+    empresa = Replace(empresa, """", "'")
+    empresa = Replace(empresa, "<", "(")
+    empresa = Replace(empresa, ">", ")")
+    empresa = Replace(empresa, "|", "-")
+
+    ' Formatar Ano/Mês
+    If IsDate(k2) Then
+        anoMes = Format$(CDate(k2), "yyyy_mm")
+    Else
+        anoMes = Replace(Trim$(CStr(k2)), " ", "_")
+    End If
+
+    ' Validar abas existentes
+    For Each nm In sheetsToCopy
+        Set ws = Nothing
+        On Error Resume Next
+        Set ws = wb.Worksheets(CStr(nm))
+        On Error GoTo TrataErro
+
+        If Not ws Is Nothing Then
+            validSheets.Add ws.Name
+        Else
+            missing = missing & vbCrLf & "- " & nm
+        End If
+    Next nm
+
+    If validSheets.Count = 0 Then
+        MsgBox "Nenhuma das abas necessárias existe. Nada a salvar.", vbCritical
+        GoTo SAIDA
+    End If
+
+    ' Copiar somente abas válidas
+    Dim arr() As String
+    ReDim arr(1 To validSheets.Count)
+
+    For i = 1 To validSheets.Count
+        arr(i) = validSheets(i)
+    Next i
+
+    wb.Worksheets(arr).Copy
+    Set wbNew = ActiveWorkbook
+
+    ' Garantir visibilidade
+    For Each wsNew In wbNew.Worksheets
+        wsNew.Visible = xlSheetVisible
+    Next wsNew
+
+    ' Definir pasta
+    folderPath = wb.Path
+
+    If Len(folderPath) = 0 Then
+        With Application.FileDialog(msoFileDialogFolderPicker)
+            .Title = "Escolha a pasta para salvar o arquivo AGING"
+            If .Show <> -1 Then
+                MsgBox "Operação cancelada.", vbInformation
+                GoTo SAIDA
+            End If
+            folderPath = .SelectedItems(1)
+        End With
+    End If
+
+    ' Nome do arquivo
+    fullName = folderPath & Application.PathSeparator & _
+               "AGING_" & anoMes & "_" & empresa & ".xlsx"
+
+    wbNew.SaveAs Filename:=fullName, FileFormat:=xlOpenXMLWorkbook
+
+    MsgBox "Arquivo criado com sucesso:" & vbCrLf & fullName & _
+           IIf(missing <> "", vbCrLf & vbCrLf & _
+               "? Abas não encontradas:" & missing, ""), vbInformation
+
+SAIDA:
+    EndFastMode st
+    Set wbNew = Nothing
+    Exit Sub
+
+TrataErro:
+    EndFastMode st
+    MsgBox "Erro " & Err.Number & ": " & Err.Description, vbCritical
+End Sub
+

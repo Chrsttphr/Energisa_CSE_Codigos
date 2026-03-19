@@ -1,0 +1,319 @@
+Option Explicit
+
+' =================================================================================
+' K_FUNCTIONS
+' MÓDULO CENTRAL DE FUNÇÕES E CONTROLE DE AMBIENTE
+'
+' CONSOLIDA:
+' - Controle de ambiente do Excel
+' - Funções utilitárias de planilha
+' - Funções de linha/coluna
+' - Funções de range dinâmico
+' - Regras de negócio
+' - Funções auxiliares de auditoria
+'
+' MACROS QUE DEPENDEM DESTE MÓDULO:
+' A, B, C, D, E, F, G, H, I, J
+' =================================================================================
+
+
+' ================================================================================
+' 1) CONTROLE PROFISSIONAL DO ESTADO DO EXCEL
+' Usado em: A, B, C, D, E, F, G, H
+' ================================================================================
+
+Public Type AppState
+    Calculation As XlCalculation
+    ScreenUpdating As Boolean
+    EnableEvents As Boolean
+    DisplayAlerts As Boolean
+    StatusBar As Variant
+End Type
+
+Public Sub BeginFastMode(ByRef st As AppState)
+    With Application
+        st.Calculation = .Calculation
+        st.ScreenUpdating = .ScreenUpdating
+        st.EnableEvents = .EnableEvents
+        st.DisplayAlerts = .DisplayAlerts
+        st.StatusBar = .StatusBar
+
+        .ScreenUpdating = False
+        .EnableEvents = False
+        .DisplayAlerts = False
+        .Calculation = xlCalculationManual
+        .StatusBar = "Processando..."
+    End With
+End Sub
+
+Public Sub EndFastMode(ByRef st As AppState)
+    With Application
+        .Calculation = st.Calculation
+        .ScreenUpdating = st.ScreenUpdating
+        .EnableEvents = st.EnableEvents
+        .DisplayAlerts = st.DisplayAlerts
+        .StatusBar = st.StatusBar
+    End With
+End Sub
+
+
+' ================================================================================
+' 2) FUNÇÕES DE PLANILHA
+' Usadas em: A, B, C, D, E, F, G, H
+' ================================================================================
+
+Public Function GetWorksheetByNameCI(ByVal wb As Workbook, ByVal NomeAba As String) As Worksheet
+    Dim ws As Worksheet
+    For Each ws In wb.Worksheets
+        If StrComp(ws.Name, NomeAba, vbTextCompare) = 0 Then
+            Set GetWorksheetByNameCI = ws
+            Exit Function
+        End If
+    Next ws
+    Set GetWorksheetByNameCI = Nothing
+End Function
+
+Public Function GetOrCreateSheet(ByVal NomeAba As String) As Worksheet
+    Set GetOrCreateSheet = GetWorksheetByNameCI(ThisWorkbook, NomeAba)
+    If GetOrCreateSheet Is Nothing Then
+        Set GetOrCreateSheet = ThisWorkbook.Worksheets.Add
+        GetOrCreateSheet.Name = NomeAba
+    End If
+End Function
+
+
+' ================================================================================
+' 3) FUNÇÕES DE LINHA E COLUNA
+' Usadas em: A, B, C, D, E, F, G
+' ================================================================================
+
+Public Function LastUsedRow(ByVal ws As Worksheet) As Long
+    Dim c As Range
+    On Error Resume Next
+    Set c = ws.Cells.Find("*", LookIn:=xlFormulas, _
+                          SearchOrder:=xlByRows, SearchDirection:=xlPrevious)
+    On Error GoTo 0
+    If c Is Nothing Then
+        LastUsedRow = 1
+    Else
+        LastUsedRow = c.Row
+    End If
+End Function
+
+Public Function NextFreeRow(ByVal ws As Worksheet, Optional ByVal col As Long = 1) As Long
+    Dim lr As Long
+    lr = ws.Cells(ws.Rows.Count, col).End(xlUp).Row
+    If lr < 2 Then
+        NextFreeRow = 2
+    Else
+        NextFreeRow = lr + 1
+    End If
+End Function
+
+Public Function ColLetraParaNumero(ByVal Letra As String) As Long
+    ColLetraParaNumero = Range(Letra & "1").Column
+End Function
+
+
+' ================================================================================
+' 4) FUNÇÕES PARA RANGE / TABELA DINÂMICA
+' Usadas em: D
+' ================================================================================
+
+Public Function UltimaLinhaUsada(ByVal ws As Worksheet) As Long
+    Dim c As Range
+    On Error Resume Next
+    Set c = ws.Cells.Find("*", LookIn:=xlFormulas, _
+                          SearchOrder:=xlByRows, SearchDirection:=xlPrevious)
+    On Error GoTo 0
+    If c Is Nothing Then UltimaLinhaUsada = 0 Else UltimaLinhaUsada = c.Row
+End Function
+
+Public Function UltimaColunaUsada(ByVal ws As Worksheet) As Long
+    Dim c As Range
+    On Error Resume Next
+    Set c = ws.Cells.Find("*", LookIn:=xlFormulas, _
+                          SearchOrder:=xlByColumns, SearchDirection:=xlPrevious)
+    On Error GoTo 0
+    If c Is Nothing Then UltimaColunaUsada = 0 Else UltimaColunaUsada = c.Column
+End Function
+
+Public Function FonteDinamica(ByVal ws As Worksheet, ByVal PrimeiraCelula As String) As Range
+    Dim r0 As Long, c0 As Long, lr As Long, lc As Long
+    Dim rngIni As Range
+
+    On Error GoTo SAIR
+    Set rngIni = ws.Range(PrimeiraCelula)
+    r0 = rngIni.Row
+    c0 = rngIni.Column
+
+    lr = UltimaLinhaUsada(ws)
+    lc = UltimaColunaUsada(ws)
+
+    If lr < r0 Or lc < c0 Then GoTo SAIR
+    Set FonteDinamica = ws.Range(ws.Cells(r0, c0), ws.Cells(lr, lc))
+    Exit Function
+
+SAIR:
+    Set FonteDinamica = Nothing
+End Function
+
+
+' ================================================================================
+' 5) REGRA DE NEGÓCIO – IDENTIFICA ZERO
+' Usada em: C (Migrar Zeradas)
+' ================================================================================
+
+Public Function EhZero(ByVal v As Variant) As Boolean
+    On Error GoTo FIM
+
+    If IsNumeric(v) Then
+        EhZero = (Abs(CDbl(v)) < 0.000000000001)
+        Exit Function
+    End If
+
+    If VarType(v) = vbString Then
+        Dim s As String, decSep As String, grpSep As String
+        s = Trim$(CStr(v))
+        If s = "" Then Exit Function
+        If s = "-" Then EhZero = True: Exit Function
+
+        s = Replace(s, Chr$(160), " ")
+        decSep = Application.International(xlDecimalSeparator)
+        grpSep = Application.International(xlThousandsSeparator)
+        If grpSep <> "" Then s = Replace(s, grpSep, "")
+
+        If decSep = "," Then s = Replace(s, ".", ",") Else s = Replace(s, ",", ".")
+        If Left$(s, 1) = "-" Or Left$(s, 1) = "+" Then s = Mid$(s, 2)
+
+        If IsNumeric(s) Then EhZero = (Abs(CDbl(s)) < 0.000000000001)
+    End If
+
+FIM:
+End Function
+
+
+' ================================================================================
+' 6) UTILIDADES GERAIS
+' Usadas em: A, B, C, D, E, F, G
+' ================================================================================
+
+Public Function ObterPasta() As String
+    ObterPasta = ThisWorkbook.Path
+End Function
+
+Public Function FormataTempo(ByVal elapsed As Double) As String
+    Dim minTotal As Long, seg As Long
+    minTotal = Int(elapsed / 60)
+    seg = Int(elapsed Mod 60)
+    FormataTempo = Format$(minTotal, "00") & ":" & Format$(seg, "00")
+End Function
+
+' ================================================================================
+' 7) FUNÇÃO AUXILIAR DE AUDITORIA (USADA NA MACRO J)
+' ================================================================================
+
+Public Function ExtrairNomeProcedimento(ByVal linha As String, ByVal token As String) As String
+    Dim tmp As String
+    tmp = Trim$(Replace(linha, token, "", 1, 1, vbTextCompare))
+    tmp = Trim$(Split(tmp, "(")(0))
+    ExtrairNomeProcedimento = tmp
+End Function
+
+' ============================================================
+' Retorna a última coluna de dados permitida por guia
+' Usada principalmente na AtualizaUmaGuia
+' ============================================================
+Public Function MaxColForSheet(ByVal nomeGuia As String) As Long
+    Select Case UCase$(nomeGuia)
+        Case "PDD_SIENF"
+            MaxColForSheet = ColLetraParaNumero("AM")   ' 39
+        Case "SICON"
+            MaxColForSheet = ColLetraParaNumero("BE")   ' 57
+        Case "SIENF"
+            MaxColForSheet = ColLetraParaNumero("AB")   ' 28 (A..AB)
+        Case Else
+            MaxColForSheet = 0
+    End Select
+End Function
+
+Public Sub ClearFiltersSafe(ByVal ws As Worksheet)
+    On Error Resume Next
+    If ws.AutoFilterMode Then
+        ws.ShowAllData
+    End If
+    On Error GoTo 0
+End Sub
+
+Public Sub SetFormulaRange( _
+    ByVal ws As Worksheet, _
+    ByVal firstRow As Long, _
+    ByVal lastRow As Long, _
+    ByVal col As Long, _
+    ByVal formulaLocal As String, _
+    ByVal formulaEN As String _
+)
+    Dim rng As Range
+    If lastRow < firstRow Then Exit Sub
+
+    Set rng = ws.Range(ws.Cells(firstRow, col), ws.Cells(lastRow, col))
+
+    On Error Resume Next
+    rng.FormulaR1C1Local = formulaLocal
+    On Error GoTo 0
+
+    If Not rng.Cells(1, 1).HasFormula Then
+        If Len(formulaEN) > 0 Then
+            On Error Resume Next
+            rng.FormulaR1C1 = formulaEN
+            On Error GoTo 0
+        End If
+    End If
+End Sub
+
+Public Function SafeUsedRange(ByVal ws As Worksheet) As Range
+    Dim lr As Long, lc As Long
+    lr = LastUsedRow(ws)
+    lc = LastUsedCol(ws)
+
+    If lr = 0 Or lc = 0 Then
+        Set SafeUsedRange = Nothing
+    Else
+        Set SafeUsedRange = ws.Range(ws.Cells(1, 1), ws.Cells(lr, lc))
+    End If
+End Function
+
+Public Function LastUsedCol(ByVal ws As Worksheet) As Long
+    On Error Resume Next
+    LastUsedCol = ws.Cells.Find( _
+        What:="*", After:=ws.Cells(1, 1), _
+        LookIn:=xlFormulas, LookAt:=xlPart, _
+        SearchOrder:=xlByColumns, _
+        SearchDirection:=xlPrevious).Column
+    On Error GoTo 0
+End Function
+
+Public Function AddSlash(ByVal p As String) As String
+    If Right$(p, 1) = "\" Then
+        AddSlash = p
+    Else
+        AddSlash = p & "\"
+    End If
+End Function
+
+Public Function OpenTextAsWorkbook(ByVal caminho As String) As Workbook
+    On Error GoTo FALLBACK
+    Workbooks.OpenText Filename:=caminho, _
+        Origin:=65001, _
+        DataType:=xlDelimited, _
+        Tab:=True, Local:=True
+    Set OpenTextAsWorkbook = ActiveWorkbook
+    Exit Function
+FALLBACK:
+    Workbooks.OpenText Filename:=caminho, _
+        Origin:=xlWindows, _
+        DataType:=xlDelimited, _
+        Tab:=True, Local:=True
+    Set OpenTextAsWorkbook = ActiveWorkbook
+End Function
+

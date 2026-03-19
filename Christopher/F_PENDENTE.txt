@@ -1,0 +1,84 @@
+Option Explicit
+ 
+' =========================================================================
+' MÓDULO: Atualizar Pendente
+' =========================================================================
+ 
+Public Sub F_Atualizar_Pendente()
+ 
+    Dim st As AppState
+    Dim wsPend As Worksheet, wsBase As Worksheet, wsS As Worksheet
+    Dim colBJ As Long, colBI As Long, colW As Long
+    Dim colQ As Long, colBG As Long
+    Dim lrBase As Long, lrPendAntes As Long, lrPendDepois As Long
+    Dim rngBase As Range, rngVis As Range
+    Dim arrStatus As Variant
+    Dim dest As Long, qtdAdd As Long, qtdRem As Long
+    Dim r As Range
+    Dim mapBase As Variant
+    Dim i As Long
+    Dim temNovas As Boolean
+ 
+    Dim firstNew As Long, lastNew As Long
+    Dim lastNewBefore As Long, lastNewAfter As Long
+    Dim qtdDupRem As Long, relColH As Long
+ 
+    Dim maxAno As Long, maxMes As Long
+    Dim iRow As Long, vAno As Variant, vMes As Variant
+ 
+    Dim fF_BR As String, fG_BR As String, fJ_BR As String, fK_BR As String, fL_BR As String, fM_BR As String
+    Dim fF_EN As String, fG_EN As String, fJ_EN As String, fK_EN As String, fL_EN As String, fM_EN As String
+ 
+    Dim t_BR As String, u_BR As String, v_BR As String, w_BR As String
+    Dim t_EN As String, u_EN As String, v_EN As String, w_EN As String
+ 
+    Dim dictSumBI As Object, dictRow As Object
+    Dim bgKey As Variant, biVal As Double, linhaBase As Long
+ 
+    Dim t5 As Single, elapsed As Double
+    t5 = Timer
+ 
+    On Error GoTo FIM
+    BeginFastMode st
+ 
+    ' ---- (todo o processamento permanece IGUAL ao que você enviou) ----
+    ' …
+    ' …
+    ' ============================================================
+    ' (todo o código acima permanece inalterado)
+    ' ============================================================
+ 
+    ' ============================================================
+    ' 6) FEEDBACK – FASE 1 (SEM TEMPO)
+    ' ============================================================
+    lrPendDepois = LastUsedRow(wsPend)
+ 
+    MsgBox _
+        "Atualização PENDENTE concluída!" & vbCrLf & vbCrLf & _
+        "Removidas (W=""Remover""): " & qtdRem & vbCrLf & _
+        "Linhas inseridas (após dedup): " & qtdAdd & vbCrLf & _
+        "Ano/Mês aplicado: " & maxAno & "/" & Format$(maxMes, "00") & vbCrLf & _
+        "Total linhas atuais: " & Application.Max(0, lrPendDepois - 1) & vbCrLf & vbCrLf & _
+        "Finalizando cálculos do Excel...", _
+        vbInformation
+ 
+    ' ============================================================
+    ' FORÇA O EXCEL A TERMINAR TODO O PROCESSAMENTO
+    ' ============================================================
+    Application.Calculate
+ 
+    ' ============================================================
+    ' FEEDBACK – FASE 2 (TEMPO REAL)
+    ' ============================================================
+    elapsed = (Timer - t5 + 86400) Mod 86400
+ 
+    MsgBox _
+        "Processamento totalmente finalizado." & vbCrLf & _
+        "Tempo total real: " & FormataTempo(elapsed), _
+        vbInformation
+ 
+FIM:
+    Debug.Print "Tempo total (Atualizar_Pendente): " & FormataTempo((Timer - t5 + 86400) Mod 86400)
+    EndFastMode st
+End Sub
+

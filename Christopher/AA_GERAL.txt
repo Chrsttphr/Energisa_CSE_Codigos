@@ -1,0 +1,59 @@
+Option Explicit
+
+' =================================================================================
+' MACRO A — ATUALIZA TODAS AS GUIAS (SICON / PDD_SIENF / SIENF)
+'
+' AUDITORIA:
+' - Controle de ambiente padronizado (BeginFastMode / EndFastMode)
+' - Tratamento de erro seguro
+' - Métricas consolidadas (arquivos, linhas, tempo)
+' - Estrutura mantida (sem alterar lógica original)
+'
+' DEPENDE DE:
+' - K_FUNCTIONS (AppState, BeginFastMode, EndFastMode, ObterPasta)
+' - AtualizaUmaGuia (engine existente)
+' =================================================================================
+
+Public Sub AA_Atualizar_SICON_PDD_SIENF()
+
+    Dim st As AppState
+    Dim pasta As String
+    Dim i As Long
+    Dim nomeGuia As String
+    Dim t0 As Double
+    Dim totalArquivos As Long
+    Dim totalLinhas As Long
+    Dim ALVOS As Variant
+
+    ' Guias a atualizar
+    ALVOS = Array("SICON", "PDD_SIENF", "SIENF")
+
+    ' Pasta base
+    pasta = ObterPasta()
+    If Len(pasta) = 0 Then Exit Sub
+
+    t0 = Timer
+    On Error GoTo FIM_COM_ERRO
+    BeginFastMode st
+
+    ' Loop principal
+    For i = LBound(ALVOS) To UBound(ALVOS)
+        nomeGuia = CStr(ALVOS(i))
+        AtualizaUmaGuia nomeGuia, pasta, totalArquivos, totalLinhas
+    Next i
+
+    EndFastMode st
+
+    MsgBox "Concluído!" & vbCrLf & _
+           "Arquivos processados: " & totalArquivos & vbCrLf & _
+           "Linhas importadas: " & totalLinhas & vbCrLf & _
+           "Tempo: " & Format(Timer - t0, "0.0s"), vbInformation
+
+    Exit Sub
+
+FIM_COM_ERRO:
+    EndFastMode st
+    MsgBox "Erro " & Err.Number & ": " & Err.Description, vbExclamation
+
+End Sub
+
