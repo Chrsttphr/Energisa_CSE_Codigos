@@ -19,7 +19,7 @@ Public Sub J_Listar_Nomes_Duplicados()
     On Error GoTo 0
 
     If prj Is Nothing Then
-        MsgBox "Habilite a opção:" & vbCrLf & _
+        MsgBox "Habilite a opÃ§Ã£o:" & vbCrLf & _
                """Trust access to the VBA project object model""", vbExclamation
         Exit Sub
     End If
