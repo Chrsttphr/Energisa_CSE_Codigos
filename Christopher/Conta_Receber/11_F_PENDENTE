@@ -1,7 +1,7 @@
 Option Explicit
  
 ' =========================================================================
-' MÓDULO: Atualizar Pendente
+' MÃ“DULO: Atualizar Pendente
 ' =========================================================================
  
 Public Sub F_Atualizar_Pendente()
@@ -41,34 +41,34 @@ Public Sub F_Atualizar_Pendente()
     On Error GoTo FIM
     BeginFastMode st
  
-    ' ---- (todo o processamento permanece IGUAL ao que você enviou) ----
-    ' …
-    ' …
+    ' ---- (todo o processamento permanece IGUAL ao que vocÃª enviou) ----
+    ' â€¦
+    ' â€¦
     ' ============================================================
-    ' (todo o código acima permanece inalterado)
+    ' (todo o cÃ³digo acima permanece inalterado)
     ' ============================================================
  
     ' ============================================================
-    ' 6) FEEDBACK – FASE 1 (SEM TEMPO)
+    ' 6) FEEDBACK â€“ FASE 1 (SEM TEMPO)
     ' ============================================================
     lrPendDepois = LastUsedRow(wsPend)
  
     MsgBox _
-        "Atualização PENDENTE concluída!" & vbCrLf & vbCrLf & _
+        "AtualizaÃ§Ã£o PENDENTE concluÃ­da!" & vbCrLf & vbCrLf & _
         "Removidas (W=""Remover""): " & qtdRem & vbCrLf & _
-        "Linhas inseridas (após dedup): " & qtdAdd & vbCrLf & _
-        "Ano/Mês aplicado: " & maxAno & "/" & Format$(maxMes, "00") & vbCrLf & _
+        "Linhas inseridas (apÃ³s dedup): " & qtdAdd & vbCrLf & _
+        "Ano/MÃªs aplicado: " & maxAno & "/" & Format$(maxMes, "00") & vbCrLf & _
         "Total linhas atuais: " & Application.Max(0, lrPendDepois - 1) & vbCrLf & vbCrLf & _
-        "Finalizando cálculos do Excel...", _
+        "Finalizando cÃ¡lculos do Excel...", _
         vbInformation
  
     ' ============================================================
-    ' FORÇA O EXCEL A TERMINAR TODO O PROCESSAMENTO
+    ' FORÃ‡A O EXCEL A TERMINAR TODO O PROCESSAMENTO
     ' ============================================================
     Application.Calculate
  
     ' ============================================================
-    ' FEEDBACK – FASE 2 (TEMPO REAL)
+    ' FEEDBACK â€“ FASE 2 (TEMPO REAL)
     ' ============================================================
     elapsed = (Timer - t5 + 86400) Mod 86400
  
