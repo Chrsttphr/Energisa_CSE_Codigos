@@ -20,7 +20,7 @@ Sub ExportarMacrosParaTXT()
         Set vbMod = vbComp.CodeModule
         conteudo = ""
 
-        ' Lê linha por linha do código
+        ' LÃª linha por linha do cÃ³digo
         For linha = 1 To vbMod.CountOfLines
             conteudo = conteudo & vbMod.Lines(linha, 1) & vbCrLf
         Next linha
