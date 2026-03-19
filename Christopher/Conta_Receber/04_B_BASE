@@ -1,11 +1,11 @@
 Option Explicit
 
 ' =================================================================================
-' MACRO B ó TRANSFERIR SICON PARA BASE_CONCILIACAO (VERS√O CORRIGIDA)
+' MACRO B ‚Äî TRANSFERIR SICON PARA BASE_CONCILIACAO (VERS√ÉO CORRIGIDA)
 '
-' - Copia SICON A:Q via array (r·pido)
-' - Aplica fÛrmulas BF:BI e BL:BO por coluna (correto, sem erro 13)
-' - Converte fÛrmulas em valores para reduzir peso
+' - Copia SICON A:Q via array (r√°pido)
+' - Aplica f√≥rmulas BF:BI e BL:BO por coluna (correto, sem erro 13)
+' - Converte f√≥rmulas em valores para reduzir peso
 '
 ' DEPENDE DE:
 ' - K_FUNCTIONS (BeginFastMode, EndFastMode, helpers)
@@ -23,7 +23,7 @@ Public Sub B_Transferir_SICON_para_Base()
     Dim ws As Worksheet
     Set ws = ThisWorkbook.Worksheets("Base_Conciliacao")
     
-    ' Par‚metros
+    ' Par√¢metros
     Const PRIMEIRA_LINHA_DADOS As Long = 2
     Const ULT_COL_ORIGEM As String = "Q"
     Const CHUNK_SIZE As Long = 5000
@@ -38,7 +38,7 @@ Public Sub B_Transferir_SICON_para_Base()
     Set wsS = GetWorksheetByNameCI(ThisWorkbook, "SICON")
     Set wsB = GetOrCreateSheet("Base_Conciliacao")
 
-    If wsS Is Nothing Then Err.Raise 5, , "A aba SICON n„o foi encontrada."
+    If wsS Is Nothing Then Err.Raise 5, , "A aba SICON n√£o foi encontrada."
 
     lrS = LastUsedRow(wsS)
     If lrS < PRIMEIRA_LINHA_DADOS Then GoTo FIM_OK
@@ -53,7 +53,7 @@ Public Sub B_Transferir_SICON_para_Base()
     Set rngD = wsB.Cells(lrB, 1).Resize(nRows, nCols)
 
     ' -----------------------------------------------------------------
-    ' Copiar A:Q por ARRAY (r·pido)
+    ' Copiar A:Q por ARRAY (r√°pido)
     ' -----------------------------------------------------------------
     Dim v As Variant, i As Long, j As Long
     v = rngS.Value2
@@ -68,7 +68,7 @@ Public Sub B_Transferir_SICON_para_Base()
     linhasImportadas = nRows
 
     ' -----------------------------------------------------------------
-    ' Capturar fÛrmulas MODELO da linha 2 (UMA POR COLUNA)
+    ' Capturar f√≥rmulas MODELO da linha 2 (UMA POR COLUNA)
     ' -----------------------------------------------------------------
     Dim fBF As String, fBG As String, fBH As String, fBI As String
     Dim fBL As String, fBM As String, fBN As String, fBO As String
@@ -84,7 +84,7 @@ Public Sub B_Transferir_SICON_para_Base()
     fBO = wsB.Range("BO2").FormulaR1C1
 
 ' -----------------------------------------------------------------
-' Aplicar fÛrmulas em BLOCOS (chunking)
+' Aplicar f√≥rmulas em BLOCOS (chunking)
 ' -----------------------------------------------------------------
 Dim startRow As Long, endRow As Long
 
@@ -96,13 +96,13 @@ Do While startRow <= lastRowDest
     endRow = Application.Min(startRow + CHUNK_SIZE - 1, lastRowDest)
 
     With wsB
-        ' BF:BI ó fÛrmulas
+        ' BF:BI ‚Äî f√≥rmulas
         .Range("BF" & startRow & ":BF" & endRow).FormulaR1C1 = fBF
         .Range("BG" & startRow & ":BG" & endRow).FormulaR1C1 = fBG
         .Range("BH" & startRow & ":BH" & endRow).FormulaR1C1 = fBH
         .Range("BI" & startRow & ":BI" & endRow).FormulaR1C1 = fBI
 
-        ' BL:BO ó fÛrmulas
+        ' BL:BO ‚Äî f√≥rmulas
         .Range("BL" & startRow & ":BL" & endRow).FormulaR1C1 = fBL
         .Range("BM" & startRow & ":BM" & endRow).FormulaR1C1 = fBM
         .Range("BN" & startRow & ":BN" & endRow).FormulaR1C1 = fBN
@@ -111,15 +111,15 @@ Do While startRow <= lastRowDest
         ' Calcular somente o bloco
         .Range("BF" & startRow & ":BO" & endRow).Calculate
 
-        ' Converter fÛrmulas em valores (alÌvio de peso)
+        ' Converter f√≥rmulas em valores (al√≠vio de peso)
         .Range("BF" & startRow & ":BO" & endRow).Value = _
             .Range("BF" & startRow & ":BO" & endRow).Value
 
         ' ---------------------------------------------------------
-        ' FORMATA«√O FINAL DO BLOCO
+        ' FORMATA√á√ÉO FINAL DO BLOCO
         ' ---------------------------------------------------------
 
-        ' BI ? n˙mero com milhar (.) e negativo entre parÍnteses
+        ' BI ? n√∫mero com milhar (.) e negativo entre par√™nteses
         
         ws.Range("BI2").Copy
         ws.Range("BI" & startRow & ":BI" & endRow).PasteSpecial xlPasteFormats
@@ -135,7 +135,7 @@ Loop
 FIM_OK:
     EndFastMode st
 
-    MsgBox "ConcluÌdo!" & vbCrLf & _
+    MsgBox "Conclu√≠do!" & vbCrLf & _
            "Linhas importadas: " & linhasImportadas & vbCrLf & _
            "Tempo: " & FormataTempo(Timer - t0), vbInformation
     Exit Sub
