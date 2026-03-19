@@ -40,13 +40,13 @@ Public Sub G_Atualizar_Em_Analise()
         Next r
     End If
  
-    ' Guarda fórmula BL
+    ' Guarda fÃ³rmula BL
     If wsA.Cells(2, colBL).HasFormula Then
         formulaBL = wsA.Cells(2, colBL).Formula
     End If
  
     ' ============================================================
-    ' 2) Identificar período mais recente
+    ' 2) Identificar perÃ­odo mais recente
     ' ============================================================
     lrBase = LastUsedRow(wsBase)
     maxAno = -1: maxMes = -1
@@ -74,14 +74,14 @@ Public Sub G_Atualizar_Em_Analise()
     Set rngBase = wsBase.Range(wsBase.Cells(1, 1), wsBase.Cells(lrBase, colBK))
  
     arrStatus = Array( _
-        "Diferença de centavos/reais", _
-        "NF Anulação/Anulada", _
-        "Enviado ao financeiro para análise", _
-        "Migração - saldo/boletos", _
-        "Erro contabilização de impostos (depois de retorno financeiro)", _
-        "Em análise", _
+        "DiferenÃ§a de centavos/reais", _
+        "NF AnulaÃ§Ã£o/Anulada", _
+        "Enviado ao financeiro para anÃ¡lise", _
+        "MigraÃ§Ã£o - saldo/boletos", _
+        "Erro contabilizaÃ§Ã£o de impostos (depois de retorno financeiro)", _
+        "Em anÃ¡lise", _
         "Enviado ao Fiscal para verificar", _
-        "Ajustado FLC mês seguinte" _
+        "Ajustado FLC mÃªs seguinte" _
     )
  
     If wsBase.AutoFilterMode Then wsBase.ShowAllData
@@ -110,7 +110,7 @@ Public Sub G_Atualizar_Em_Analise()
     If wsBase.AutoFilterMode Then wsBase.ShowAllData
  
     ' ============================================================
-    ' 4) Reaplicar fórmula BL
+    ' 4) Reaplicar fÃ³rmula BL
     ' ============================================================
     Dim lrDepois As Long
     lrDepois = LastUsedRow(wsA)
@@ -129,10 +129,10 @@ SAIDA:
         MsgBox "Erro " & Err.Number & ": " & Err.Description & vbCrLf & _
                "Tempo: " & FormataTempo(elapsed), vbExclamation
     Else
-        MsgBox "Atualização concluída!" & vbCrLf & vbCrLf & _
+        MsgBox "AtualizaÃ§Ã£o concluÃ­da!" & vbCrLf & vbCrLf & _
                "Linhas removidas: " & qtdRem & vbCrLf & _
                "Linhas adicionadas: " & qtdAdd & vbCrLf & _
-               "Período: " & maxAno & "/" & Format$(maxMes, "00") & vbCrLf & _
+               "PerÃ­odo: " & maxAno & "/" & Format$(maxMes, "00") & vbCrLf & _
                "Tempo: " & FormataTempo(elapsed), vbInformation
     End If
  
