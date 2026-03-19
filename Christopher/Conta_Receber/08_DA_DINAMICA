@@ -18,21 +18,21 @@ Public Sub DA_Atualizar_Tabela_Dinamica( _
 
     ' ---- Planilhas ----
     Set wsResumo = GetWorksheetByNameCI(ThisWorkbook, NomeAbaResumo)
-    If wsResumo Is Nothing Then Err.Raise 5, , "Aba '" & NomeAbaResumo & "' n„o encontrada."
+    If wsResumo Is Nothing Then Err.Raise 5, , "Aba '" & NomeAbaResumo & "' n√£o encontrada."
 
     Set wsDados = GetWorksheetByNameCI(ThisWorkbook, NomeAbaDados)
-    If wsDados Is Nothing Then Err.Raise 5, , "Aba '" & NomeAbaDados & "' n„o encontrada."
+    If wsDados Is Nothing Then Err.Raise 5, , "Aba '" & NomeAbaDados & "' n√£o encontrada."
 
-    ' ---- Fonte din‚mica ----
+    ' ---- Fonte din√¢mica ----
     Set rngFonte = FonteDinamica(wsDados, PrimeiraCelula)
-    If rngFonte Is Nothing Then Err.Raise 5, , "Fonte de dados inv·lida."
+    If rngFonte Is Nothing Then Err.Raise 5, , "Fonte de dados inv√°lida."
     If WorksheetFunction.CountA(rngFonte) = 0 Then Err.Raise 5, , "Fonte de dados vazia."
 
     src = "'" & wsDados.Name & "'!" & rngFonte.Address(True, True, xlA1, True)
 
     If wsResumo.PivotTables.Count = 0 Then GoTo SAIDA
 
-    ' ---- PivotCache ˙nico ----
+    ' ---- PivotCache √∫nico ----
     Set pc = ThisWorkbook.PivotCaches.Create(xlDatabase, src)
 
     For Each pt In wsResumo.PivotTables
@@ -42,7 +42,7 @@ Public Sub DA_Atualizar_Tabela_Dinamica( _
         updated = updated + 1
     Next pt
 
-    Debug.Print "PivÙs atualizados em '" & wsResumo.Name & "': " & updated
+    Debug.Print "Piv√¥s atualizados em '" & wsResumo.Name & "': " & updated
 
 SAIDA:
     EndFastMode st
