@@ -10,12 +10,12 @@ Public Sub E_Atualizar_PDD_AGING_UI()
 
     elapsed = (Timer - t0 + 86400) Mod 86400
     MsgBox "PDD_AGING atualizado com sucesso." & vbCrLf & _
-           "Tempo de execução: " & FormataTempo(elapsed), vbInformation
+           "Tempo de execuÃ§Ã£o: " & FormataTempo(elapsed), vbInformation
     Exit Sub
 
 EH:
     elapsed = (Timer - t0 + 86400) Mod 86400
     MsgBox "Falha ao atualizar PDD_AGING: " & Err.Description & vbCrLf & _
-           "Tempo de execução: " & FormataTempo(elapsed), vbExclamation
+           "Tempo de execuÃ§Ã£o: " & FormataTempo(elapsed), vbExclamation
 End Sub
 
